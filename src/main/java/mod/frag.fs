@@ -901,6 +901,26 @@ bool drawTexture(int id, int side, float xIn, float yIn, int light, int metadata
   return true;
 }
 
+//returns true if successful
+bool skipChunk(inout ivec3 current, vec3 vector, inout ivec3 chunkPos, vec3 inc, ivec3 iinc, int worldWidth) {
+  ivec3 jump = (iinc == 1 ? 16 - current : current + 1);
+  vec3 jumpDist = (jump-1)*inc;
+  if (vector.x + jumpDist.x < vector.y + jumpDist.y) {
+    if (vector.x + jumpDist.x < vector.z + jumpDist.z) {
+      chunkPos.x += iinc.x;
+      if (chunkPos.x == worldWidth || chunkPos.x == -1) {
+        return false;
+      }
+      vector.x += jumpDist.x + inc.x;
+      current.x += jump.x*iinc.x;
+      //TODO vector.yz, current.yz
+      return true;
+    }
+  }
+  return false; //TODO remove
+}
+//TODO chunkId
+
 void trace(inout ivec3 current, vec3 vector, vec3 dir, vec3 pos, vec3 inc, ivec3 iinc) {
   ivec3 last = ivec3(current.xyz);
   ivec3 chunkPos = ivec3(renderDistance, chunkHeight, renderDistance);
@@ -977,7 +997,13 @@ void trace(inout ivec3 current, vec3 vector, vec3 dir, vec3 pos, vec3 inc, ivec3
       }
     }
     
-    //TODO skip empty chunks
+    //skip empty chunks
+    //if (chunkId == 0) {
+      //bool success = skipChunk(current, vector, chunkPos, inc, iinc, worldWidth);
+      //if (!success) {
+        //return;
+      //}
+    //}
     
     if (chunkId != 0) {
       blockId = blockData[(chunkId-1)*CHUNK_SIZE + (current.y<<8) + (current.z<<4) + current.x].id;
@@ -1030,8 +1056,8 @@ void trace(inout ivec3 current, vec3 vector, vec3 dir, vec3 pos, vec3 inc, ivec3
 }
 
 void main(void) {
-  vec3 dir = getRaySphere(2*M_PI, M_PI);
-  //vec3 dir = getRayFlat(fovx, fovy);
+  //vec3 dir = getRaySphere(2*M_PI, M_PI);
+  vec3 dir = getRayFlat(fovx, fovy);
   vec3 point = vec3(cameraPos);
   ivec3 current = ivec3(floor(point))%16;
 	//color = texture(tex, texcoord);

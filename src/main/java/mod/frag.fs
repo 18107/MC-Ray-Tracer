@@ -4,6 +4,8 @@
 
 #define CHUNK_SIZE 16*16*16
 
+#define WORLD_HEIGHT_CHUNKS 16
+
 in vec2 texcoord;
 
 uniform vec3 cameraPos;
@@ -306,6 +308,9 @@ bool drawTexture(int id, int side, float xIn, float yIn, int light, int metadata
     x = 23;
     y = 14 + metadata; //or wet sponge
     break;
+  case 160: //TODO stained_glass_pane
+  case 102: //TODO glass_pane
+  case 95: //TODO stained_glass
   case 20: //glass
     x = 13;
     y = 9;
@@ -455,6 +460,7 @@ bool drawTexture(int id, int side, float xIn, float yIn, int light, int metadata
     x = 17;
     y = 3;
     break;
+  case 159: //TODO clay
   case 35: //wool
     switch (metadata) {
     case 0: //white
@@ -894,15 +900,19 @@ bool drawTexture(int id, int side, float xIn, float yIn, int light, int metadata
     break;
     */
   default:
-    return false;
+    break;
+    //return false;
   }
   //TODO do sunlight
   color = texture(tex, vec2((x + xIn)/32, (y + yIn)/32))/* * vec4((light+1)/16.0, (light+1)/16.0, (light+1)/16.0, 1)*/;
+  if (color.a == 0) {
+    return false;
+  }
   return true;
 }
 
 //returns true if successful
-bool skipChunk(inout ivec3 current, vec3 vector, inout ivec3 chunkPos, vec3 inc, ivec3 iinc, int worldWidth) {
+bool skipChunk(inout ivec3 current, vec3 vector, inout ivec3 chunkPos, vec3 dir, vec3 pos, vec3 inc, ivec3 iinc, int worldWidth) {
   ivec3 jump = (iinc == 1 ? 16 - current : current + 1);
   vec3 jumpDist = (jump-1)*inc;
   if (vector.x + jumpDist.x < vector.y + jumpDist.y) {
@@ -914,6 +924,12 @@ bool skipChunk(inout ivec3 current, vec3 vector, inout ivec3 chunkPos, vec3 inc,
       vector.x += jumpDist.x + inc.x;
       current.x += jump.x*iinc.x;
       //TODO vector.yz, current.yz
+      int temp = int(floor(dir.y*(current.x+16*(chunkPos.x-renderDistance)-pos.x)/dir.x + pos.y)) % 16;
+      current.y += temp*iinc.y;
+      vector.y += temp*inc.y;
+      temp = int(floor(dir.z*(current.x+16*(chunkPos.x-renderDistance)-pos.x)/dir.x + pos.z)) % 16;
+      current.z += temp*iinc.z;
+      vector.z += temp*inc.z;
       return true;
     }
   }
@@ -928,130 +944,130 @@ void trace(inout ivec3 current, vec3 vector, vec3 dir, vec3 pos, vec3 inc, ivec3
   int chunkId = location[chunkPos.z*worldWidth*16 + chunkPos.x*16 + chunkPos.y];
   //TODO if player is above the world
   int lastChunkId; //used for light levels
-  int blockId;
+  int blockId = 0;
   bool blockFound = false;
   int side;
   float texX;
   float texY;
   while (!blockFound) {
-    //TODO improve direction testing
-    last = current;
     blockId = 0;
-    
-    //Next cube
-    if (vector.x < vector.y) {
-      if (vector.x < vector.z) {
-          vector.x += inc.x;
-          current.x += iinc.x;
-          if ((current.x&16) == 16) {
-            current.x &= 15;
-            last.x = current.x - iinc.x;
-            chunkPos.x += iinc.x;
-            if (chunkPos.x == worldWidth || chunkPos.x == -1) {
-              return;
+    while (blockId == 0) {
+      //TODO improve direction testing
+      last = current;
+      
+      //Next cube
+      if (vector.x < vector.y) {
+        if (vector.x < vector.z) {
+            vector.x += inc.x;
+            current.x += iinc.x;
+            if ((current.x&16) == 16) {
+              current.x &= 15;
+              last.x = current.x - iinc.x;
+              chunkPos.x += iinc.x;
+              if (chunkPos.x == worldWidth || chunkPos.x == -1) {
+                return;
+              }
+              lastChunkId = chunkId;
+              chunkId = location[chunkPos.z*worldWidth*WORLD_HEIGHT_CHUNKS + chunkPos.x*WORLD_HEIGHT_CHUNKS + chunkPos.y];
             }
-            lastChunkId = chunkId;
-            chunkId = location[chunkPos.z*worldWidth*16 + chunkPos.x*16 + chunkPos.y];
-          }
+        } else {
+            vector.z += inc.z;
+            current.z += iinc.z;
+            if ((current.z&16) == 16) {
+              current.z &= 15;
+              last.z = current.z - iinc.z;
+              chunkPos.z += iinc.z;
+              if (chunkPos.z == worldWidth || chunkPos.z == -1) {
+                return;
+              }
+              lastChunkId = chunkId;
+              chunkId = location[chunkPos.z*worldWidth*WORLD_HEIGHT_CHUNKS + chunkPos.x*WORLD_HEIGHT_CHUNKS + chunkPos.y];
+            }
+        }
       } else {
-          vector.z += inc.z;
-          current.z += iinc.z;
-          if ((current.z&16) == 16) {
-            current.z &= 15;
-            last.z = current.z - iinc.z;
-            chunkPos.z += iinc.z;
-            if (chunkPos.z == worldWidth || chunkPos.z == -1) {
-              return;
+        if (vector.y < vector.z) {
+            vector.y += inc.y;
+            current.y += iinc.y;
+            if ((current.y&16) == 16) {
+              current.y &= 15;
+              last.y = current.y - iinc.y;
+              chunkPos.y += iinc.y;
+              if (chunkPos.y == WORLD_HEIGHT_CHUNKS || chunkPos.y == -1) {
+                return;
+              }
+              lastChunkId = chunkId;
+              chunkId = location[chunkPos.z*worldWidth*WORLD_HEIGHT_CHUNKS + chunkPos.x*WORLD_HEIGHT_CHUNKS + chunkPos.y];
             }
-            lastChunkId = chunkId;
-            chunkId = location[chunkPos.z*worldWidth*16 + chunkPos.x*16 + chunkPos.y];
-          }
+        } else {
+            vector.z += inc.z;
+            current.z += iinc.z;
+            if ((current.z&16) == 16) {
+              current.z &= 15;
+              last.z = current.z - iinc.z;
+              chunkPos.z += iinc.z;
+              if (chunkPos.z == worldWidth || chunkPos.z == -1) {
+                return;
+              }
+              lastChunkId = chunkId;
+              chunkId = location[chunkPos.z*worldWidth*WORLD_HEIGHT_CHUNKS + chunkPos.x*WORLD_HEIGHT_CHUNKS + chunkPos.y];
+            }
+        }
       }
-    } else {
-      if (vector.y < vector.z) {
-          vector.y += inc.y;
-          current.y += iinc.y;
-          if ((current.y&16) == 16) {
-            current.y &= 15;
-            last.y = current.y - iinc.y;
-            chunkPos.y += iinc.y;
-            if ((chunkPos.y&16) == 16) {
-              return;
-            }
-            lastChunkId = chunkId;
-            chunkId = location[chunkPos.z*worldWidth*16 + chunkPos.x*16 + chunkPos.y];
-          }
-      } else {
-          vector.z += inc.z;
-          current.z += iinc.z;
-          if ((current.z&16) == 16) {
-            current.z &= 15;
-            last.z = current.z - iinc.z;
-            chunkPos.z += iinc.z;
-            if (chunkPos.z == worldWidth || chunkPos.z == -1) {
-              return;
-            }
-            lastChunkId = chunkId;
-            chunkId = location[chunkPos.z*worldWidth*16 + chunkPos.x*16 + chunkPos.y];
-          }
-      }
-    }
-    
-    //skip empty chunks
-    //if (chunkId == 0) {
-      //bool success = skipChunk(current, vector, chunkPos, inc, iinc, worldWidth);
-      //if (!success) {
-        //return;
+      
+      //skip empty chunks
+      //if (chunkId == 0) {
+        //bool success = skipChunk(current, vector, chunkPos, dir, pos, inc, iinc, worldWidth);
+        //if (!success) {
+          //return;
+        //}
       //}
-    //}
-    
-    if (chunkId != 0) {
-      blockId = blockData[(chunkId-1)*CHUNK_SIZE + (current.y<<8) + (current.z<<4) + current.x].id;
-    }
-    
-    //if (block != air)
-    if (blockId != 0) {
-      int light = blockData[(lastChunkId-1)*CHUNK_SIZE + ((last.y%16)<<8) + ((last.z%16)<<4) + (last.x%16)].lightLevel;
-      int metadataId = metaLocation[chunkPos.z*worldWidth*16 + chunkPos.x*16 + chunkPos.y];
-      int metadata = 0;
       
-      if (metadataId != 0) {
-        metadata = blockMetadata[(metadataId-1)*CHUNK_SIZE + (current.y<<8) + (current.z<<4) + current.x];
+      if (chunkId != 0) {
+        blockId = blockData[(chunkId-1)*CHUNK_SIZE + (current.y<<8) + (current.z<<4) + current.x].id;
       }
       
-      if (current.x != last.x) {
-        if (current.x > last.x) {
-          texX = (dir.z*(current.x+16*(chunkPos.x-renderDistance)-pos.x)/dir.x)-(current.z+16*(chunkPos.z-renderDistance)-pos.z);
-          texY = 1-((dir.y*(current.x+16*(chunkPos.x-renderDistance)-pos.x)/dir.x)-(current.y+16*(chunkPos.y-chunkHeight)-pos.y));
-          side = 4;
-        } else {
-          texX = 1-((dir.z*(current.x+16*(chunkPos.x-renderDistance)+1-pos.x)/dir.x)-(current.z+16*(chunkPos.z-renderDistance)-pos.z));
-          texY = 1-((dir.y*(current.x+16*(chunkPos.x-renderDistance)+1-pos.x)/dir.x)-(current.y+16*(chunkPos.y-chunkHeight)-pos.y));
-          side = 5;
-        }
-      } else if (current.y != last.y) {
-        if (current.y > last.y) {
-          texX = (dir.x*(current.y+16*(chunkPos.y-chunkHeight)-pos.y)/dir.y)-(current.x+16*(chunkPos.x-renderDistance)-pos.x);
-          texY = 1-((dir.z*(current.y+16*(chunkPos.y-chunkHeight)-pos.y)/dir.y)-(current.z+16*(chunkPos.z-renderDistance)-pos.z));
-          side = 0;
-        } else {
-          texX = (dir.x*(current.y+16*(chunkPos.y-chunkHeight)+1-pos.y)/dir.y)-(current.x+16*(chunkPos.x-renderDistance)-pos.x);
-          texY = (dir.z*(current.y+16*(chunkPos.y-chunkHeight)+1-pos.y)/dir.y)-(current.z+16*(chunkPos.z-renderDistance)-pos.z);
-          side = 1;
-        }
-      } else { //if (current.z != last.z) {
-        if (current.z > last.z) {
-          texX = 1-((dir.x*(current.z+16*(chunkPos.z-renderDistance)-pos.z)/dir.z)-(current.x+16*(chunkPos.x-renderDistance)-pos.x));
-          texY = 1-((dir.y*(current.z+16*(chunkPos.z-renderDistance)-pos.z)/dir.z)-(current.y+16*(chunkPos.y-chunkHeight)-pos.y));
-          side = 2;
-        } else {
-          texX = (dir.x*(current.z+16*(chunkPos.z-renderDistance)+1-pos.z)/dir.z)-(current.x+16*(chunkPos.x-renderDistance)-pos.x);
-          texY = 1-((dir.y*(current.z+16*(chunkPos.z-renderDistance)+1-pos.z)/dir.z)-(current.y+16*(chunkPos.y-chunkHeight)-pos.y));
-          side = 3;
-        }
-      }
-      blockFound = drawTexture(blockId, side, texX, texY, light, metadata);
+    } //else if (block != air)
+    
+    int light = blockData[(lastChunkId-1)*CHUNK_SIZE + ((last.y%16)<<8) + ((last.z%16)<<4) + (last.x%16)].lightLevel;
+    int metadataId = metaLocation[chunkPos.z*worldWidth*WORLD_HEIGHT_CHUNKS + chunkPos.x*WORLD_HEIGHT_CHUNKS + chunkPos.y];
+    int metadata = 0;
+    
+    if (metadataId != 0) {
+      metadata = blockMetadata[(metadataId-1)*CHUNK_SIZE + (current.y<<8) + (current.z<<4) + current.x];
     }
+    
+    if (current.x != last.x) {
+      if (current.x > last.x) {
+        texX = (dir.z*(current.x+16*(chunkPos.x-renderDistance)-pos.x)/dir.x)-(current.z+16*(chunkPos.z-renderDistance)-pos.z);
+        texY = 1-((dir.y*(current.x+16*(chunkPos.x-renderDistance)-pos.x)/dir.x)-(current.y+16*(chunkPos.y-chunkHeight)-pos.y));
+        side = 4;
+      } else {
+        texX = 1-((dir.z*(current.x+16*(chunkPos.x-renderDistance)+1-pos.x)/dir.x)-(current.z+16*(chunkPos.z-renderDistance)-pos.z));
+        texY = 1-((dir.y*(current.x+16*(chunkPos.x-renderDistance)+1-pos.x)/dir.x)-(current.y+16*(chunkPos.y-chunkHeight)-pos.y));
+        side = 5;
+      }
+    } else if (current.y != last.y) {
+      if (current.y > last.y) {
+        texX = (dir.x*(current.y+16*(chunkPos.y-chunkHeight)-pos.y)/dir.y)-(current.x+16*(chunkPos.x-renderDistance)-pos.x);
+        texY = 1-((dir.z*(current.y+16*(chunkPos.y-chunkHeight)-pos.y)/dir.y)-(current.z+16*(chunkPos.z-renderDistance)-pos.z));
+        side = 0;
+      } else {
+        texX = (dir.x*(current.y+16*(chunkPos.y-chunkHeight)+1-pos.y)/dir.y)-(current.x+16*(chunkPos.x-renderDistance)-pos.x);
+        texY = (dir.z*(current.y+16*(chunkPos.y-chunkHeight)+1-pos.y)/dir.y)-(current.z+16*(chunkPos.z-renderDistance)-pos.z);
+        side = 1;
+      }
+    } else { //if (current.z != last.z) {
+      if (current.z > last.z) {
+        texX = 1-((dir.x*(current.z+16*(chunkPos.z-renderDistance)-pos.z)/dir.z)-(current.x+16*(chunkPos.x-renderDistance)-pos.x));
+        texY = 1-((dir.y*(current.z+16*(chunkPos.z-renderDistance)-pos.z)/dir.z)-(current.y+16*(chunkPos.y-chunkHeight)-pos.y));
+        side = 2;
+      } else {
+        texX = (dir.x*(current.z+16*(chunkPos.z-renderDistance)+1-pos.z)/dir.z)-(current.x+16*(chunkPos.x-renderDistance)-pos.x);
+        texY = 1-((dir.y*(current.z+16*(chunkPos.z-renderDistance)+1-pos.z)/dir.z)-(current.y+16*(chunkPos.y-chunkHeight)-pos.y));
+        side = 3;
+      }
+    }
+    blockFound = drawTexture(blockId, side, texX, texY, light, metadata);
   }
 }
 

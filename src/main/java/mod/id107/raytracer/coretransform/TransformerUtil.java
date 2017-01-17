@@ -2,6 +2,7 @@ package mod.id107.raytracer.coretransform;
 
 import mod.id107.raytracer.RenderUtil;
 import net.minecraft.client.multiplayer.WorldClient;
+import net.minecraft.world.chunk.Chunk;
 
 public class TransformerUtil {
 
@@ -23,5 +24,16 @@ public class TransformerUtil {
 	 */
 	public static void runShader() {
 		RenderUtil.runShader();
+	}
+	
+	/**
+	 * Called from asm modified code:
+	 * {@link net.minecraft.world.chunk.Chunk#setBlockState() setBlockState}
+	 * @param chunk
+	 */
+	public static void onChunkModified(Chunk chunk) {
+		//TODO make worldLoader private
+		if (RenderUtil.worldLoader != null)
+			RenderUtil.worldLoader.chunkModified(chunk);
 	}
 }

@@ -3,6 +3,9 @@ package mod.id107.raytracer.world;
 import java.nio.IntBuffer;
 import java.util.ArrayDeque;
 import java.util.Deque;
+import java.util.HashSet;
+import java.util.Iterator;
+import java.util.Set;
 
 import org.lwjgl.BufferUtils;
 import org.lwjgl.opengl.GL15;
@@ -11,10 +14,13 @@ import org.lwjgl.opengl.GL30;
 import org.lwjgl.opengl.GL43;
 
 import mod.id107.raytracer.Log;
+import mod.id107.raytracer.RenderUtil;
 import mod.id107.raytracer.Shader;
+import mod.id107.raytracer.coretransform.CLTLog;
 import net.minecraft.block.Block;
 import net.minecraft.client.Minecraft;
 import net.minecraft.entity.Entity;
+import net.minecraft.world.chunk.Chunk;
 import net.minecraft.world.chunk.storage.ExtendedBlockStorage;
 
 public class WorldLoader {
@@ -27,6 +33,8 @@ public class WorldLoader {
 	private Deque<Integer> chunkIdList; //TODO minimize size
 	private Deque<Integer> metadataIdList;
 	private int renderDistance;
+	
+	private Set<Chunk> chunksModified = new HashSet<Chunk>();
 	
 	private int playerChunkX;
 	private int playerChunkY;
@@ -161,7 +169,14 @@ public class WorldLoader {
 			GL20.glUniform1i(chunkHeightUniform, centerY);
 		}
 		
-		//TODO check for block updates
+		//handle block updates
+		Iterator<Chunk> iterator = chunksModified.iterator();
+		while (iterator.hasNext()) {
+			Chunk chunk = iterator.next();
+			reloadChunk(chunk, shader);
+		}
+		chunksModified.clear();
+		
 		if (playerChunkX != centerX || playerChunkZ != centerZ) {
 			//if the player has moved in the positive x direction
 			if (centerX != playerChunkX) {
@@ -188,6 +203,37 @@ public class WorldLoader {
 			GL15.glBindBuffer(GL43.GL_SHADER_STORAGE_BUFFER, shader.getWorldMetadataSsbo());
 			GL15.glBufferData(GL43.GL_SHADER_STORAGE_BUFFER, worldMetadataBuffer, GL15.GL_DYNAMIC_DRAW);
 			GL15.glBindBuffer(GL43.GL_SHADER_STORAGE_BUFFER, 0);
+		}
+	}
+	
+	//TODO lighting updates
+	private void reloadChunk(Chunk chunk, Shader shader) {
+		int chunkX = chunk.xPosition - playerChunkX + renderDistance-1;
+		int chunkZ = chunk.zPosition - playerChunkZ + renderDistance-1;
+		
+		//bounds checking
+		if (chunkX >= renderDistance*2-1 || chunkX < 0 ||
+				chunkZ >= renderDistance*2-1 || chunkZ < 0) {
+			return;
+		}
+		
+		for (int y = 0; y < 16; y++) {
+			ExtendedBlockStorage storage = chunk.getBlockStorageArray()[y];
+			int id = worldChunks[chunkZ*(renderDistance*2-1)*16 + chunkX*16 + y];
+			if (id == 0) {
+				if (storage == null) {
+					continue;
+				} else {
+					id = chunkIdList.pop();
+				}
+			} else {
+				if (storage == null) {
+					worldChunks[chunkZ*(renderDistance*2-1)*16 + chunkX*16 + y] = 0;
+					chunkIdList.push(id);
+					continue;
+				}
+			}
+			loadChunk(id, shader, storage);
 		}
 	}
 	
@@ -380,5 +426,9 @@ public class WorldLoader {
 				}
 			}
 		}
+	}
+	
+	public void chunkModified(Chunk chunk) {
+		chunksModified.add(chunk);
 	}
 }

@@ -22,7 +22,7 @@ import net.minecraft.world.chunk.storage.ExtendedBlockStorage;
 public class RenderUtil {
 
 	private static Shader shader;
-	private static WorldLoader worldLoader;
+	public static WorldLoader worldLoader;
 	
 	public static void createShader() {
 		if (shader == null) {

@@ -95,12 +95,12 @@ public class EntityRendererTransformer extends ClassTransformer {
 						CLTLog.info("found F2D in method " + getMethodName());
 						
 						//Go to start of method call
-						for (int i = 0; i < 4; i++) {
+						for (int i = 0; i < 4+3; i++) {
 							instruction = instruction.getPrevious();
 						}
 						
 						//remove method call
-						for (int i = 0; i < 8; i++) {
+						for (int i = 0; i < 8+3+41; i++) {
 							method.instructions.remove(instruction.getNext());
 						}
 						
@@ -110,7 +110,7 @@ public class EntityRendererTransformer extends ClassTransformer {
 			}
 		};
 		
-		return new MethodTransformer[] {transformSetupCameraTransform, transformRenderWorld, /*transformRenderWorldPass*/};
+		return new MethodTransformer[] {transformSetupCameraTransform, transformRenderWorld, transformRenderWorldPass};
 	}
 
 }

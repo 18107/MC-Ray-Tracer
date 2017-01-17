@@ -1,6 +1,7 @@
 package mod.id107.raytracer;
 
 import net.minecraftforge.common.ForgeVersion;
+import net.minecraftforge.common.MinecraftForge;
 import net.minecraftforge.fml.common.Mod;
 import net.minecraftforge.fml.common.Mod.EventHandler;
 import net.minecraftforge.fml.common.event.FMLInitializationEvent;
@@ -21,5 +22,6 @@ public class TheMod
     public void init(FMLInitializationEvent event)
     {
         Log.info("" + ForgeVersion.mcVersion);
+        MinecraftForge.EVENT_BUS.register(new mod.id107.raytracer.coretransform.EventHandler());
     }
 }

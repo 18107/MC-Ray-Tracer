@@ -19,6 +19,7 @@ import mod.id107.raytracer.Shader;
 import mod.id107.raytracer.coretransform.CLTLog;
 import net.minecraft.block.Block;
 import net.minecraft.client.Minecraft;
+import net.minecraft.client.multiplayer.WorldClient;
 import net.minecraft.entity.Entity;
 import net.minecraft.world.chunk.Chunk;
 import net.minecraft.world.chunk.storage.ExtendedBlockStorage;
@@ -26,6 +27,8 @@ import net.minecraft.world.chunk.storage.ExtendedBlockStorage;
 public class WorldLoader {
 
 	public static final int chunkSize = 16*16*16;
+	
+	public final WorldClient theWorld;
 	
 	private int[] worldChunks;
 	private int[] worldMetadata;
@@ -43,7 +46,8 @@ public class WorldLoader {
 	private boolean updateAllChunks;
 	private int timer;
 	
-	public WorldLoader() {
+	public WorldLoader(WorldClient world) {
+		theWorld = world;
 		updateAllChunks = true;
 		timer = 60;
 	}
@@ -57,7 +61,7 @@ public class WorldLoader {
 		//TODO remove
 		boolean showMetadata = false;
 		if (showMetadata) {
-			ExtendedBlockStorage storage = mc.theWorld.getChunkFromChunkCoords(centerX, centerZ).getBlockStorageArray()[centerY];
+			ExtendedBlockStorage storage = theWorld.getChunkFromChunkCoords(centerX, centerZ).getBlockStorageArray()[centerY];
 			if (storage != null) {
 				int metadata = storage.get(7, 6, 11).getBlock().getMetaFromState(storage.get(7, 6, 11));
 				Log.info(metadata);
@@ -65,7 +69,7 @@ public class WorldLoader {
 		}
 		boolean showLightLevel = false;
 		if (showLightLevel) {
-			ExtendedBlockStorage storage = mc.theWorld.getChunkFromChunkCoords(centerX, centerZ).getBlockStorageArray()[centerY];
+			ExtendedBlockStorage storage = theWorld.getChunkFromChunkCoords(centerX, centerZ).getBlockStorageArray()[centerY];
 			if (storage != null) {
 				int lightLevel = storage.getBlocklightArray().get(0, 0, 0);
 				Log.info(lightLevel);
@@ -121,7 +125,7 @@ public class WorldLoader {
 				for (int x = 0; x < renderDistance*2-1; x++) {
 					int chunkX = centerX+x-(renderDistance-1);
 					int chunkZ = centerZ+z-(renderDistance-1);
-					ExtendedBlockStorage[] storage = mc.theWorld.getChunkFromChunkCoords(chunkX, chunkZ).getBlockStorageArray();
+					ExtendedBlockStorage[] storage = theWorld.getChunkFromChunkCoords(chunkX, chunkZ).getBlockStorageArray();
 					for (int y = 0; y < 16; y++) {
 						if (storage[y] != null) {
 							int chunkId = chunkIdList.pop();
@@ -170,12 +174,14 @@ public class WorldLoader {
 		}
 		
 		//handle block updates
-		Iterator<Chunk> iterator = chunksModified.iterator();
-		while (iterator.hasNext()) {
-			Chunk chunk = iterator.next();
-			reloadChunk(chunk, shader);
+		synchronized (chunksModified) {
+			Iterator<Chunk> iterator = chunksModified.iterator();
+			while (iterator.hasNext()) {
+				Chunk chunk = iterator.next();
+				reloadChunk(chunk, shader);
+			}
+			chunksModified.clear();
 		}
-		chunksModified.clear();
 		
 		if (playerChunkX != centerX || playerChunkZ != centerZ) {
 			//if the player has moved in the positive x direction
@@ -206,6 +212,7 @@ public class WorldLoader {
 		}
 	}
 	
+	//TODO metadata
 	//TODO lighting updates
 	private void reloadChunk(Chunk chunk, Shader shader) {
 		int chunkX = chunk.xPosition - playerChunkX + renderDistance-1;
@@ -220,23 +227,36 @@ public class WorldLoader {
 		for (int y = 0; y < 16; y++) {
 			ExtendedBlockStorage storage = chunk.getBlockStorageArray()[y];
 			int id = worldChunks[chunkZ*(renderDistance*2-1)*16 + chunkX*16 + y];
-			if (id == 0) {
-				if (storage == null) {
+			int metadataId = worldMetadata[chunkZ*(renderDistance*2-1)*16 + chunkX*16 + y];
+			if (storage == null) {
+				if (id == 0) {
+					//do nothing
 					continue;
 				} else {
-					id = chunkIdList.pop();
-				}
-			} else {
-				if (storage == null) {
+					//remove chunk
 					worldChunks[chunkZ*(renderDistance*2-1)*16 + chunkX*16 + y] = 0;
 					chunkIdList.push(id);
+					if (metadataId != 0) {
+						worldMetadata[chunkZ*(renderDistance*2-1)*16 + chunkX*16 + y] = 0;
+						metadataIdList.push(metadataId);
+					}
 					continue;
+				}
+			} else {
+				if (id == 0) {
+					//create chunk
+					id = chunkIdList.pop();
+				}
+				if (metadataId == 0) {
+					metadataId = metadataIdList.pop();
 				}
 			}
 			loadChunk(id, shader, storage);
+			loadMetadata(metadataId, shader, storage);
 		}
 	}
 	
+	//TODO handle lighting and metadata
 	private void loadChunk(int id, Shader shader, ExtendedBlockStorage storage) {
 		int[] data = new int[chunkSize*2];
 		for (int y = 0; y < 16; y++) {
@@ -341,7 +361,7 @@ public class WorldLoader {
 		int chunkX = centerX + (positive ? renderDistance-1 : -(renderDistance-1));
 		for (int z = 0; z < renderDistance*2-1; z++) {
 			int chunkZ = centerZ+z-(renderDistance-1);
-			ExtendedBlockStorage[] storage = mc.theWorld.getChunkFromChunkCoords(chunkX, chunkZ).getBlockStorageArray();
+			ExtendedBlockStorage[] storage = theWorld.getChunkFromChunkCoords(chunkX, chunkZ).getBlockStorageArray();
 			for (int y = 0; y < 16; y++) {
 				if (storage[y] != null) {
 					int chunkId = chunkIdList.pop();
@@ -407,7 +427,7 @@ public class WorldLoader {
 		int chunkZ = centerZ + (positive ? renderDistance-1 : -(renderDistance-1));
 		for (int x = 0; x < renderDistance*2-1; x++) {
 			int chunkX = centerX+x-(renderDistance-1);
-			ExtendedBlockStorage[] storage = mc.theWorld.getChunkFromChunkCoords(chunkX, chunkZ).getBlockStorageArray();
+			ExtendedBlockStorage[] storage = theWorld.getChunkFromChunkCoords(chunkX, chunkZ).getBlockStorageArray();
 			for (int y = 0; y < 16; y++) {
 				if (storage[y] != null) {
 					int chunkId = chunkIdList.pop();
@@ -429,6 +449,8 @@ public class WorldLoader {
 	}
 	
 	public void chunkModified(Chunk chunk) {
-		chunksModified.add(chunk);
+		synchronized (chunksModified) {
+			chunksModified.add(chunk);
+		}
 	}
 }

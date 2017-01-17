@@ -28,7 +28,7 @@ public class RenderUtil {
 		if (shader == null) {
 			shader = new Shader();
 			shader.createShaderProgram();
-			worldLoader = new WorldLoader();
+			worldLoader = new WorldLoader(Minecraft.getMinecraft().theWorld);
 		}
 	}
 	
@@ -47,6 +47,10 @@ public class RenderUtil {
 		if (Keyboard.isKeyDown(Keyboard.KEY_NUMPAD5)) {
 			destroyShader();
 			createShader();
+		}
+		
+		if (mc.theWorld != worldLoader.theWorld) {
+			worldLoader = new WorldLoader(mc.theWorld);
 		}
 		
 		//Use shader program

@@ -1,6 +1,7 @@
 package mod.id107.raytracer;
 
 import java.nio.IntBuffer;
+import java.util.Map;
 
 import org.lwjgl.BufferUtils;
 import org.lwjgl.input.Keyboard;
@@ -22,7 +23,9 @@ import net.minecraft.world.chunk.storage.ExtendedBlockStorage;
 public class RenderUtil {
 
 	private static Shader shader;
-	public static WorldLoader worldLoader;
+	public static WorldLoader worldLoader; //TODO multiple dimensions
+	
+	public static Map<String, TextureFinder> textureMap = null;
 	
 	public static void createShader() {
 		if (shader == null) {
@@ -85,7 +88,7 @@ public class RenderUtil {
 		int fovxUniform = GL20.glGetUniformLocation(shader.getShaderProgram(), "fovx");
 		GL20.glUniform1f(fovxUniform, fov*Display.getWidth()/(float)Display.getHeight());
 		
-		worldLoader.loadWorld(mc, entityPosX, entityPosY, entityPosZ, shader, partialTicks);
+		worldLoader.updateWorld(entityPosX, entityPosY, entityPosZ, shader);
 		
 		//Bind vbo and texture
 		GL15.glBindBuffer(GL15.GL_ARRAY_BUFFER, shader.getVbo());
@@ -109,5 +112,15 @@ public class RenderUtil {
 		
 		//Stop using shader program
 		GL20.glUseProgram(0);
+	}
+	
+	//TODO move to another class
+	public static void uploadIDs() {
+		int idSize = Block.REGISTRY.getKeys().size();
+		IntBuffer buffer = BufferUtils.createIntBuffer(idSize*16*8*4); //metadata,side,struct
+		//TODO 0
+		for (int i = 1; i < idSize; i++) {
+			Block.getBlockById(i).getRegistryName();
+		}
 	}
 }

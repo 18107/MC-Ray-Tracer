@@ -19,9 +19,21 @@ uniform sampler2D tex;
 
 out vec4 color;
 
+struct TextureLocation {
+  int xPosition;
+  int yPosition;
+  int width;
+  int height;
+};
+
 struct BlockData {
   int id;
   int lightLevel;
+};
+
+layout(std430, binding = 1) buffer textureMap
+{
+  TextureLocation textureLocation[];
 };
 
 layout(std430, binding = 2) buffer worldChunks

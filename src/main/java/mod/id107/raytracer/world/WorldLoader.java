@@ -26,195 +26,251 @@ import net.minecraft.world.chunk.storage.ExtendedBlockStorage;
 
 public class WorldLoader {
 
+	/**
+	 * The number of blocks per 16×16×16 chunk.
+	 */
 	public static final int chunkSize = 16*16*16;
 	
 	public final WorldClient theWorld;
 	
+	/**
+	 * The maximum number of chunks that can be uploaded to the graphics card per frame.
+	 */
+	public static int maxChunkUpdates = 4;
+	
+	/**
+	 * An array containing the location of all chunks in VRAM.
+	 */
 	private int[] worldChunks;
+	/**
+	 * An array containing the location of all metadata in VRAM.
+	 */
 	private int[] worldMetadata;
-	/**A list of free id's*/
-	private Deque<Integer> chunkIdList; //TODO minimize size
-	private Deque<Integer> metadataIdList;
+	/**
+	 * A list of free chunk id's
+	 */
+	private ArrayDeque<Integer> chunkIdList; //TODO minimize size?
+	/**
+	 * A list of free metadata id's
+	 */
+	private ArrayDeque<Integer> metadataIdList;
+	
+	/**
+	 * Used to check if the render distance has changed.
+	 */
 	private int renderDistance;
 	
-	private Set<Chunk> chunksModified = new HashSet<Chunk>();
+	private ArrayDeque<Chunk> chunksModified = new ArrayDeque<Chunk>(24*24);
 	
 	private int playerChunkX;
 	private int playerChunkY;
 	private int playerChunkZ;
 	
-	private boolean updateAllChunks;
-	private int timer;
+	/**
+	 * Prevents the world updating multiple times while a player is teleporting.
+	 */
+	private boolean teleporting = false;
 	
 	public WorldLoader(WorldClient world) {
 		theWorld = world;
-		updateAllChunks = true;
-		timer = 60;
+		//guarantees that variables are correctly allocated
+		renderDistance = -1;
 	}
 	
-	//TODO rename
-	public void loadWorld(Minecraft mc, double posX, double posY, double posZ, Shader shader, float partialTicks) {
+	/**
+	 * Gets a chunk from the chunk coordinates, then adds it
+	 * to the queue if it exists and is not already in the queue.
+	 * @param x chunk coordinate
+	 * @param z chunk coordinate
+	 */
+	public void updateChunk(int x, int z) {
+		Chunk chunk = theWorld.getChunkFromChunkCoords(x, z);
+		ExtendedBlockStorage[] storage = chunk.getBlockStorageArray();
+		for (int y = 0; y < 16; y++) {
+			if (storage[y] != null) {
+				updateChunk(chunk);
+				break;
+			}
+		}
+	}
+	
+	/**
+	 * Adds chunk to the end of the queue if it is not already in the queue.
+	 * @param chunk
+	 */
+	public void updateChunk(Chunk chunk) {
+		synchronized (chunksModified) {
+			if (!chunksModified.contains(chunk)) {
+				chunksModified.add(chunk);
+			}
+		}
+	}
+	
+	/**
+	 * Adds chunk to the beginning of the queue.<br>
+	 * If the chunk is already in the queue, the duplicate is removed first.
+	 * @param chunk
+	 */
+	public void updateChunkFirst(Chunk chunk) {
+		synchronized (chunksModified) {
+			if (chunksModified.contains(chunk)) {
+				chunksModified.remove(chunk);
+			}
+			chunksModified.push(chunk);
+		}
+	}
+	
+	private void initializeWorld(int renderDistance, int centerX, int centerY, int centerZ, Shader shader) {
+		synchronized (chunksModified) {
+			chunksModified.clear();
+		}
+		
+		playerChunkX = centerX;
+		playerChunkZ = centerZ;
+		
+		//initialize the world
+		worldChunks = new int[(renderDistance*2-1)*16*(renderDistance*2-1)];
+		worldMetadata = new int[(renderDistance*2-1)*16*(renderDistance*2-1)];
+		chunkIdList = new ArrayDeque<Integer>();
+		metadataIdList = new ArrayDeque<Integer>();
+		for (int i = worldChunks.length; i > 0; i--) {
+			chunkIdList.push(i);
+		}
+		for (int i = worldMetadata.length; i > 0; i--) {
+			metadataIdList.push(i);
+		}
+		
+		//update the buffer size
+		GL15.glBindBuffer(GL43.GL_SHADER_STORAGE_BUFFER, shader.getChunkSsbo());
+		GL15.glBufferData(GL43.GL_SHADER_STORAGE_BUFFER, chunkSize*worldChunks.length*2*4, GL15.GL_DYNAMIC_DRAW);
+		
+		GL15.glBindBuffer(GL43.GL_SHADER_STORAGE_BUFFER, shader.getMetadataSsbo());
+		GL15.glBufferData(GL43.GL_SHADER_STORAGE_BUFFER, chunkSize*worldMetadata.length*4, GL15.GL_DYNAMIC_DRAW);
+		GL15.glBindBuffer(GL43.GL_SHADER_STORAGE_BUFFER, 0);
+		
+		//inform the shader of the new render distance
+		int renderDistanceUniform = GL20.glGetUniformLocation(shader.getShaderProgram(), "renderDistance");
+		GL20.glUniform1i(renderDistanceUniform, renderDistance-1);
+	}
+	
+	//TODO handle render distance changes
+	public void reloadWorld(int renderDistance, int centerX, int centerY, int centerZ, Shader shader) {
+		initializeWorld(renderDistance, centerX, centerY, centerZ, shader);
+
+		//upload the chunks in a spiral TODO (0, 0)
+		updateChunk(centerX, centerZ);
+		for (int r = 1; r < renderDistance; r++) {
+			for (int x = -r+1; x <= r; x++) {
+				int z = -r;
+				updateChunk(centerX+x, centerZ+z);
+			}
+			for (int z = -r+1; z <= r; z++) {
+				int x = r;
+				updateChunk(centerX+x, centerZ+z);
+			}
+			for (int x = r-1; x >= -r; x--) {
+				int z = r;
+				updateChunk(centerX+x, centerZ+z);
+			}
+			for (int z = r-1; z >= -r; z--) {
+				int x = -r;
+				updateChunk(centerX+x, centerZ+z);
+			}
+		}
+
+		//upload chunk coordinates
+		IntBuffer worldChunkBuffer = BufferUtils.createIntBuffer(worldChunks.length);
+		worldChunkBuffer.put(worldChunks);
+		worldChunkBuffer.flip();
+		GL15.glBindBuffer(GL43.GL_SHADER_STORAGE_BUFFER, shader.getWorldChunkSsbo());
+		GL15.glBufferData(GL43.GL_SHADER_STORAGE_BUFFER, worldChunkBuffer, GL15.GL_DYNAMIC_DRAW);
+		GL15.glBindBuffer(GL43.GL_SHADER_STORAGE_BUFFER, 0);
+
+		//upload metadata coordinates
+		IntBuffer worldMetadataBuffer = BufferUtils.createIntBuffer(worldMetadata.length);
+		worldMetadataBuffer.put(worldMetadata);
+		worldMetadataBuffer.flip();
+		GL15.glBindBuffer(GL43.GL_SHADER_STORAGE_BUFFER, shader.getWorldMetadataSsbo());
+		GL15.glBufferData(GL43.GL_SHADER_STORAGE_BUFFER, worldMetadataBuffer, GL15.GL_DYNAMIC_DRAW);
+		GL15.glBindBuffer(GL43.GL_SHADER_STORAGE_BUFFER, 0);
+	}
+	
+	public void updateWorld(double posX, double posY, double posZ, Shader shader) {
+		
 		int centerX = (int) Math.floor(posX/16);
 		int centerZ = (int) Math.floor(posZ/16);
 		int centerY = (int) Math.floor(posY/16);
 		
-		//TODO remove
-		boolean showMetadata = false;
-		if (showMetadata) {
-			ExtendedBlockStorage storage = theWorld.getChunkFromChunkCoords(centerX, centerZ).getBlockStorageArray()[centerY];
-			if (storage != null) {
-				int metadata = storage.get(7, 6, 11).getBlock().getMetaFromState(storage.get(7, 6, 11));
-				Log.info(metadata);
-			}
+		int renderDistance = Minecraft.getMinecraft().gameSettings.renderDistanceChunks;
+		//if the render distance has changed, or the player has moved too far
+		if (this.renderDistance != renderDistance) {
+			this.renderDistance = renderDistance;
+			reloadWorld(renderDistance, centerX, centerY, centerZ, shader);
+			return;
 		}
-		boolean showLightLevel = false;
-		if (showLightLevel) {
-			ExtendedBlockStorage storage = theWorld.getChunkFromChunkCoords(centerX, centerZ).getBlockStorageArray()[centerY];
-			if (storage != null) {
-				int lightLevel = storage.getBlocklightArray().get(0, 0, 0);
-				Log.info(lightLevel);
+		
+		if (playerChunkX - centerX > renderDistance/2 ||
+				playerChunkX - centerX < -renderDistance/2 ||
+				playerChunkZ - centerZ > renderDistance/2 ||
+				playerChunkZ - centerZ < -renderDistance/2) {
+			teleporting = true;
+			CLTLog.info("teleporting");
+		} else {
+			if (teleporting) {
+				teleporting = false;
+				CLTLog.info("reloading");
+				reloadWorld(renderDistance, centerX, centerY, centerZ, shader);
+				return;
 			}
 		}
 		
-		if (timer != 0) {
-			timer--;
-		}
-		
-		//TODO upload chunks when available
-		//if the render distance has changed
-		if (renderDistance != mc.gameSettings.renderDistanceChunks || (updateAllChunks && timer == 0)) {
-			renderDistance = mc.gameSettings.renderDistanceChunks;
-			
-			if (updateAllChunks == false) {
-				updateAllChunks = true;
-				timer = 60;
-			} else if (timer == 0) {
-				updateAllChunks = false;
+		//handle block updates
+		synchronized (chunksModified) {
+			for (int i = 0; !chunksModified.isEmpty() && i < maxChunkUpdates; i++) {
+				Chunk chunk = chunksModified.remove();
+				reloadChunk(chunk, renderDistance, shader);
 			}
-			
-			playerChunkX = centerX;
-			playerChunkZ = centerZ;
-			
-			//reinitialize the world
-			worldChunks = new int[(renderDistance*2-1)*16*(renderDistance*2-1)];
-			worldMetadata = new int[(renderDistance*2-1)*16*(renderDistance*2-1)];
-			chunkIdList = new ArrayDeque<Integer>();
-			metadataIdList = new ArrayDeque<Integer>();
-			for (int i = worldChunks.length; i > 0; i--) {
-				chunkIdList.push(i);
-			}
-			for (int i = worldMetadata.length; i > 0; i--) {
-				metadataIdList.push(i);
-			}
-			
-			//TODO minimize size
-			//update the buffer size
-			GL15.glBindBuffer(GL43.GL_SHADER_STORAGE_BUFFER, shader.getChunkSsbo());
-			GL15.glBufferData(GL43.GL_SHADER_STORAGE_BUFFER, chunkSize*worldChunks.length*2*4, GL15.GL_DYNAMIC_DRAW);
-			
-			GL15.glBindBuffer(GL43.GL_SHADER_STORAGE_BUFFER, shader.getMetadataSsbo());
-			GL15.glBufferData(GL43.GL_SHADER_STORAGE_BUFFER, chunkSize*worldMetadata.length*4, GL15.GL_DYNAMIC_DRAW);
-			GL15.glBindBuffer(GL43.GL_SHADER_STORAGE_BUFFER, 0);
-
-			//inform the shader of the new render distance
-			int renderDistanceUniform = GL20.glGetUniformLocation(shader.getShaderProgram(), "renderDistance");
-			GL20.glUniform1i(renderDistanceUniform, renderDistance-1);
-			
-			//upload the chunks
-			for (int z = 0; z < renderDistance*2-1; z++) {
-				for (int x = 0; x < renderDistance*2-1; x++) {
-					int chunkX = centerX+x-(renderDistance-1);
-					int chunkZ = centerZ+z-(renderDistance-1);
-					ExtendedBlockStorage[] storage = theWorld.getChunkFromChunkCoords(chunkX, chunkZ).getBlockStorageArray();
-					for (int y = 0; y < 16; y++) {
-						if (storage[y] != null) {
-							int chunkId = chunkIdList.pop();
-							worldChunks[z*(renderDistance*2-1)*16 + x*16 + y] = chunkId;
-							loadChunk(chunkId, shader, storage[y]);
-							
-							int metadataId = metadataIdList.pop();
-							boolean idUsed = loadMetadata(metadataId, shader, storage[y]);
-							if (idUsed) {
-								worldMetadata[z*(renderDistance*2-1)*16 + x*16 + y] = metadataId;
-							} else {
-								worldMetadata[z*(renderDistance*2-1)*16 + x*16 + y] = 0;
-								metadataIdList.push(metadataId);
-							}
-						} else {
-							worldChunks[z*(renderDistance*2-1)*16 + x*16 + y] = 0;
-							worldMetadata[z*(renderDistance*2-1)*16 + x*16 + y] = 0;
-						}
-					}
-				}
-			}
-			
-			//upload chunk coordinates
-			IntBuffer worldChunkBuffer = BufferUtils.createIntBuffer(worldChunks.length);
-			worldChunkBuffer.put(worldChunks);
-			worldChunkBuffer.flip();
-			GL15.glBindBuffer(GL43.GL_SHADER_STORAGE_BUFFER, shader.getWorldChunkSsbo());
-			GL15.glBufferData(GL43.GL_SHADER_STORAGE_BUFFER, worldChunkBuffer, GL15.GL_DYNAMIC_DRAW);
-			GL15.glBindBuffer(GL43.GL_SHADER_STORAGE_BUFFER, 0);
-			
-			//upload metadata coordinates
-			IntBuffer worldMetadataBuffer = BufferUtils.createIntBuffer(worldMetadata.length);
-			worldMetadataBuffer.put(worldMetadata);
-			worldMetadataBuffer.flip();
-			GL15.glBindBuffer(GL43.GL_SHADER_STORAGE_BUFFER, shader.getWorldMetadataSsbo());
-			GL15.glBufferData(GL43.GL_SHADER_STORAGE_BUFFER, worldMetadataBuffer, GL15.GL_DYNAMIC_DRAW);
-			GL15.glBindBuffer(GL43.GL_SHADER_STORAGE_BUFFER, 0);
 		}
 		
 		//Update the players altitude
 		if (playerChunkY != centerY) {
 			playerChunkY = centerY;
-			
+
 			int chunkHeightUniform = GL20.glGetUniformLocation(shader.getShaderProgram(), "chunkHeight");
 			GL20.glUniform1i(chunkHeightUniform, centerY);
 		}
 		
-		//handle block updates
-		synchronized (chunksModified) {
-			Iterator<Chunk> iterator = chunksModified.iterator();
-			while (iterator.hasNext()) {
-				Chunk chunk = iterator.next();
-				reloadChunk(chunk, shader);
-			}
-			chunksModified.clear();
-		}
-		
+		//Update the players chunk location
 		if (playerChunkX != centerX || playerChunkZ != centerZ) {
-			//if the player has moved in the positive x direction
-			if (centerX != playerChunkX) {
-				moveX(mc, shader, centerX, centerZ, centerX > playerChunkX);
+			while (centerX != playerChunkX) {
+				moveX(shader, centerX, centerZ, renderDistance, centerX > playerChunkX);
 			}
-			if (centerZ != playerChunkZ) {
-				moveZ(mc, shader, centerX, centerZ, centerZ > playerChunkZ);
+			while (centerZ != playerChunkZ) {
+				moveZ(shader, centerX, centerZ, renderDistance, centerZ > playerChunkZ);
 			}
 			playerChunkX = centerX;
 			playerChunkZ = centerZ;
-			
-			//upload chunk coordinates
-			IntBuffer buffer = BufferUtils.createIntBuffer(worldChunks.length);
-			buffer.put(worldChunks);
-			buffer.flip();
-			GL15.glBindBuffer(GL43.GL_SHADER_STORAGE_BUFFER, shader.getWorldChunkSsbo());
-			GL15.glBufferData(GL43.GL_SHADER_STORAGE_BUFFER, buffer, GL15.GL_DYNAMIC_DRAW);
-			GL15.glBindBuffer(GL43.GL_SHADER_STORAGE_BUFFER, 0);
-			
-			//upload metadata coordinates
-			IntBuffer worldMetadataBuffer = BufferUtils.createIntBuffer(worldMetadata.length);
-			worldMetadataBuffer.put(worldMetadata);
-			worldMetadataBuffer.flip();
-			GL15.glBindBuffer(GL43.GL_SHADER_STORAGE_BUFFER, shader.getWorldMetadataSsbo());
-			GL15.glBufferData(GL43.GL_SHADER_STORAGE_BUFFER, worldMetadataBuffer, GL15.GL_DYNAMIC_DRAW);
-			GL15.glBindBuffer(GL43.GL_SHADER_STORAGE_BUFFER, 0);
 		}
+
+		//upload chunk coordinates
+		IntBuffer buffer = BufferUtils.createIntBuffer(worldChunks.length);
+		buffer.put(worldChunks);
+		buffer.flip();
+		GL15.glBindBuffer(GL43.GL_SHADER_STORAGE_BUFFER, shader.getWorldChunkSsbo());
+		GL15.glBufferData(GL43.GL_SHADER_STORAGE_BUFFER, buffer, GL15.GL_DYNAMIC_DRAW);
+		GL15.glBindBuffer(GL43.GL_SHADER_STORAGE_BUFFER, 0);
+
+		//upload metadata coordinates
+		IntBuffer worldMetadataBuffer = BufferUtils.createIntBuffer(worldMetadata.length);
+		worldMetadataBuffer.put(worldMetadata);
+		worldMetadataBuffer.flip();
+		GL15.glBindBuffer(GL43.GL_SHADER_STORAGE_BUFFER, shader.getWorldMetadataSsbo());
+		GL15.glBufferData(GL43.GL_SHADER_STORAGE_BUFFER, worldMetadataBuffer, GL15.GL_DYNAMIC_DRAW);
+		GL15.glBindBuffer(GL43.GL_SHADER_STORAGE_BUFFER, 0);
 	}
 	
-	//TODO metadata
 	//TODO lighting updates
-	private void reloadChunk(Chunk chunk, Shader shader) {
+	private void reloadChunk(Chunk chunk, int renderDistance, Shader shader) {
 		int chunkX = chunk.xPosition - playerChunkX + renderDistance-1;
 		int chunkZ = chunk.zPosition - playerChunkZ + renderDistance-1;
 		
@@ -246,9 +302,11 @@ public class WorldLoader {
 				if (id == 0) {
 					//create chunk
 					id = chunkIdList.pop();
+					worldChunks[chunkZ*(renderDistance*2-1)*16 + chunkX*16 + y] = id;
 				}
 				if (metadataId == 0) {
 					metadataId = metadataIdList.pop();
+					worldMetadata[chunkZ*(renderDistance*2-1)*16 + chunkX*16 + y] = metadataId;
 				}
 			}
 			loadChunk(id, shader, storage);
@@ -317,7 +375,7 @@ public class WorldLoader {
 		return containsValues;
 	}
 	
-	private void moveX(Minecraft mc, Shader shader, int centerX, int centerZ, boolean positive) {
+	private void moveX(Shader shader, int centerX, int centerZ, int renderDistance, boolean positive) {
 		//deallocate chunks
 		for (int z = 0; z < renderDistance*2-1; z++) {
 			for (int y = 0; y < 16; y++) {
@@ -361,29 +419,21 @@ public class WorldLoader {
 		int chunkX = centerX + (positive ? renderDistance-1 : -(renderDistance-1));
 		for (int z = 0; z < renderDistance*2-1; z++) {
 			int chunkZ = centerZ+z-(renderDistance-1);
-			ExtendedBlockStorage[] storage = theWorld.getChunkFromChunkCoords(chunkX, chunkZ).getBlockStorageArray();
+			Chunk chunk = theWorld.getChunkFromChunkCoords(chunkX, chunkZ);
+			ExtendedBlockStorage[] storage = chunk.getBlockStorageArray();
 			for (int y = 0; y < 16; y++) {
+				worldChunks[z*(renderDistance*2-1)*16 + (positive ? renderDistance*2-2 : 0)*16 + y] = 0;
+				worldMetadata[z*(renderDistance*2-1)*16 + (positive ? renderDistance*2-2 : 0)*16 + y] = 0;
 				if (storage[y] != null) {
-					int chunkId = chunkIdList.pop();
-					worldChunks[z*(renderDistance*2-1)*16 + (positive ? renderDistance*2-2 : 0)*16 + y] = chunkId;
-					loadChunk(chunkId, shader, storage[y]);
-					int metadataId = metadataIdList.pop();
-					boolean idUsed = loadMetadata(metadataId, shader, storage[y]);
-					if (idUsed) {
-						worldMetadata[z*(renderDistance*2-1)*16 + (positive ? renderDistance*2-2 : 0)*16 + y] = metadataId;
-					} else {
-						worldMetadata[z*(renderDistance*2-1)*16 + (positive ? renderDistance*2-2 : 0)*16 + y] = 0;
-						metadataIdList.push(metadataId);
-					}
-				} else {
-					worldChunks[z*(renderDistance*2-1)*16 + (positive ? renderDistance*2-2 : 0)*16 + y] = 0;
-					worldMetadata[z*(renderDistance*2-1)*16 + (positive ? renderDistance*2-2 : 0)*16 + y] = 0;
+					updateChunk(chunk);
 				}
 			}
 		}
+		
+		playerChunkX += positive ? 1 : -1;
 	}
 	
-	private void moveZ(Minecraft mc, Shader shader, int centerX, int centerZ, boolean positive) {
+	private void moveZ(Shader shader, int centerX, int centerZ, int renderDistance, boolean positive) {
 		//deallocate chunks
 		for (int x = 0; x < renderDistance*2-1; x++) {
 			for (int y = 0; y < 16; y++) {
@@ -427,30 +477,17 @@ public class WorldLoader {
 		int chunkZ = centerZ + (positive ? renderDistance-1 : -(renderDistance-1));
 		for (int x = 0; x < renderDistance*2-1; x++) {
 			int chunkX = centerX+x-(renderDistance-1);
-			ExtendedBlockStorage[] storage = theWorld.getChunkFromChunkCoords(chunkX, chunkZ).getBlockStorageArray();
+			Chunk chunk = theWorld.getChunkFromChunkCoords(chunkX, chunkZ);
+			ExtendedBlockStorage[] storage = chunk.getBlockStorageArray();
 			for (int y = 0; y < 16; y++) {
+				worldChunks[(positive ? renderDistance*2-2 : 0)*(renderDistance*2-1)*16 + x*16 + y] = 0;
+				worldMetadata[(positive ? renderDistance*2-2 : 0)*(renderDistance*2-1)*16 + x*16 + y] = 0;
 				if (storage[y] != null) {
-					int chunkId = chunkIdList.pop();
-					worldChunks[(positive ? renderDistance*2-2 : 0)*(renderDistance*2-1)*16 + x*16 + y] = chunkId;
-					loadChunk(chunkId, shader, storage[y]);
-					int metadataId = metadataIdList.pop();
-					boolean idUsed = loadMetadata(metadataId, shader, storage[y]);
-					if (idUsed) {
-						worldMetadata[(positive ? renderDistance*2-2 : 0)*(renderDistance*2-1)*16 + x*16 + y] = metadataId;
-					} else {
-						worldMetadata[(positive ? renderDistance*2-2 : 0)*(renderDistance*2-1)*16 + x*16 + y] = 0;
-						metadataIdList.push(metadataId);
-					}
-				} else {
-					worldChunks[(positive ? renderDistance*2-2 : 0)*(renderDistance*2-1)*16 + x*16 + y] = 0;
+					updateChunk(chunk);
 				}
 			}
 		}
-	}
-	
-	public void chunkModified(Chunk chunk) {
-		synchronized (chunksModified) {
-			chunksModified.add(chunk);
-		}
+		
+		playerChunkZ += positive ? 1 : -1;
 	}
 }

@@ -12,6 +12,7 @@ import org.lwjgl.opengl.GL20;
 import org.lwjgl.opengl.GL30;
 import org.lwjgl.opengl.GL43;
 
+import mod.id107.raytracer.coretransform.CLTLog;
 import mod.id107.raytracer.world.WorldLoader;
 import net.minecraft.block.Block;
 import net.minecraft.client.Minecraft;
@@ -24,6 +25,7 @@ public class RenderUtil {
 
 	private static Shader shader;
 	public static WorldLoader worldLoader; //TODO multiple dimensions
+	public static boolean pauseRendering = false;
 	
 	public static Map<String, TextureFinder> textureMap = null;
 	
@@ -31,7 +33,10 @@ public class RenderUtil {
 		if (shader == null) {
 			shader = new Shader();
 			shader.createShaderProgram();
-			worldLoader = new WorldLoader(Minecraft.getMinecraft().theWorld);
+			if (worldLoader == null) {
+				worldLoader = new WorldLoader();
+			}
+			worldLoader.setReloadWorld();
 		}
 	}
 	
@@ -52,21 +57,8 @@ public class RenderUtil {
 			createShader();
 		}
 		
-		if (mc.theWorld != worldLoader.theWorld) {
-			worldLoader = new WorldLoader(mc.theWorld);
-		}
-		
 		//Use shader program
 		GL20.glUseProgram(shader.getShaderProgram());
-		
-		//Setup view
-		GL11.glMatrixMode(GL11.GL_PROJECTION);
-		GL11.glPushMatrix();
-		GL11.glLoadIdentity();
-		GL11.glOrtho(-1, 1, -1, 1, -1, 1);
-		GL11.glMatrixMode(GL11.GL_MODELVIEW);
-		GL11.glPushMatrix();
-		GL11.glLoadIdentity();
 		
 		//TODO third person view
 		Entity entity = mc.getRenderViewEntity();
@@ -88,27 +80,44 @@ public class RenderUtil {
 		int fovxUniform = GL20.glGetUniformLocation(shader.getShaderProgram(), "fovx");
 		GL20.glUniform1f(fovxUniform, fov*Display.getWidth()/(float)Display.getHeight());
 		
-		worldLoader.updateWorld(entityPosX, entityPosY, entityPosZ, shader);
-		
-		//Bind vbo and texture
-		GL15.glBindBuffer(GL15.GL_ARRAY_BUFFER, shader.getVbo());
-		GL20.glEnableVertexAttribArray(0);
-		GL20.glVertexAttribPointer(0, 2, GL11.GL_BYTE, false, 0, 0L);
-		GL11.glBindTexture(GL11.GL_TEXTURE_2D, 8);
-		
-		//Render
-		GL11.glDrawArrays(GL11.GL_TRIANGLES, 0, 6);
-		
-		//Reset vbo and texture
-		GL11.glBindTexture(GL11.GL_TEXTURE_2D, 0);
-		GL20.glDisableVertexAttribArray(0);
-		GL15.glBindBuffer(GL15.GL_ARRAY_BUFFER, 0);
-		
-		//Reset view
-		GL11.glMatrixMode(GL11.GL_PROJECTION);
-		GL11.glPopMatrix();
-		GL11.glMatrixMode(GL11.GL_MODELVIEW);
-		GL11.glPopMatrix();
+		if (!pauseRendering) {
+			if (worldLoader == null) {
+				worldLoader = new WorldLoader();
+			}
+			if (worldLoader.dimension != mc.theWorld.provider.getDimension()) {
+				worldLoader.dimension = mc.theWorld.provider.getDimension();
+			}
+			worldLoader.updateWorld(entityPosX, entityPosY, entityPosZ, shader);
+
+			//Setup view
+			GL11.glMatrixMode(GL11.GL_PROJECTION);
+			GL11.glPushMatrix();
+			GL11.glLoadIdentity();
+			GL11.glOrtho(-1, 1, -1, 1, -1, 1);
+			GL11.glMatrixMode(GL11.GL_MODELVIEW);
+			GL11.glPushMatrix();
+			GL11.glLoadIdentity();
+
+			//Bind vbo and texture
+			GL15.glBindBuffer(GL15.GL_ARRAY_BUFFER, shader.getVbo());
+			GL20.glEnableVertexAttribArray(0);
+			GL20.glVertexAttribPointer(0, 2, GL11.GL_BYTE, false, 0, 0L);
+			GL11.glBindTexture(GL11.GL_TEXTURE_2D, 8);
+
+			//Render
+			GL11.glDrawArrays(GL11.GL_TRIANGLES, 0, 6);
+
+			//Reset vbo and texture
+			GL11.glBindTexture(GL11.GL_TEXTURE_2D, 0);
+			GL20.glDisableVertexAttribArray(0);
+			GL15.glBindBuffer(GL15.GL_ARRAY_BUFFER, 0);
+
+			//Reset view
+			GL11.glMatrixMode(GL11.GL_PROJECTION);
+			GL11.glPopMatrix();
+			GL11.glMatrixMode(GL11.GL_MODELVIEW);
+			GL11.glPopMatrix();
+		}
 		
 		//Stop using shader program
 		GL20.glUseProgram(0);

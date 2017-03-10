@@ -8,8 +8,12 @@ import com.google.common.collect.Lists;
 
 import mod.id107.raytracer.RenderUtil;
 import mod.id107.raytracer.TextureFinder;
+import mod.id107.raytracer.gui.RayTracerSettings;
 import net.minecraft.block.Block;
 import net.minecraft.block.state.IBlockState;
+import net.minecraft.client.Minecraft;
+import net.minecraft.client.gui.GuiButton;
+import net.minecraft.client.gui.GuiOptions;
 import net.minecraft.client.multiplayer.WorldClient;
 import net.minecraft.client.renderer.texture.Stitcher;
 import net.minecraft.client.renderer.texture.Stitcher.Slot;
@@ -27,6 +31,25 @@ public class TransformerUtil {
 			RenderUtil.createShader();
 		} else {
 			RenderUtil.destroyShader();
+		}
+	}
+	
+	/**
+	 * Called from asm modified code:
+	 * {@link net.minecraft.client.gui.GuiOptions#initGui() initGui()}
+	 */
+	public static void addButtonsToGuiOptions(GuiOptions guiOptions, List<GuiButton> buttonList) {
+		buttonList.add(new GuiButton(18107, guiOptions.width / 2 + 5, guiOptions.height / 6 + 12 + 6, 150, 20, "Ray Tracer Settings"));
+	}
+	
+	/**
+	 * Called from asm modified code:
+	 * {@link net.minecraft.client.gui.GuiOptions#actionPerformed() actionPerformed(GuiButton)}
+	 */
+	public static void addButtonAction(GuiOptions guiOptions, GuiButton button) {
+		if (button.id == 18107) {
+			Minecraft.getMinecraft().gameSettings.saveOptions();
+			Minecraft.getMinecraft().displayGuiScreen(new RayTracerSettings(guiOptions));
 		}
 	}
 	

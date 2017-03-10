@@ -14,6 +14,9 @@ uniform float fovx;
 uniform float fovy;
 uniform int renderDistance;
 uniform int chunkHeight;
+uniform bool spherical;
+uniform bool stereoscopic3d;
+uniform float eyeWidth;
 
 uniform sampler2D tex;
 
@@ -79,16 +82,32 @@ vec3 rotate(vec3 camera, vec3 ray) {
 }
 
 //Gets the direction of the ray assuming a flat screen
-vec3 getRayFlat(float fovx, float fovy) {
-  vec3 ray = vec3((-1+texcoord.x*2)*tan(fovy/2)*fovx/fovy, (-1+texcoord.y*2)*tan(fovy/2), -1);
+vec3 getRayFlat(float fovx, float fovy, bool stereoscopic) {
+  vec3 ray;
+  if (stereoscopic) {
+    if (texcoord.x < 0.5) {
+      ray = vec3((-1+texcoord.x*4)*tan(fovy/2)*fovx/fovy, (-1+texcoord.y*2)*tan(fovy/2), -1);
+    } else {
+      ray = vec3((-3+texcoord.x*4)*tan(fovy/2)*fovx/fovy, (-1+texcoord.y*2)*tan(fovy/2), -1);
+    }
+  } else {
+    ray = vec3((-1+texcoord.x*2)*tan(fovy/2)*fovx/fovy, (-1+texcoord.y*2)*tan(fovy/2), -1);
+  }
   return rotate(cameraDir, ray);
 }
 
 //Gets the direction of the ray assuming a spherical screen
-vec3 getRaySphere(float fovx, float fovy) {
-  vec3 ray = vec3(-sin((texcoord.x)*fovx)*sin((texcoord.y)*fovy),
-    -cos((texcoord.y)*fovy),
-    cos((texcoord.x)*fovx)*sin((texcoord.y)*fovy));
+vec3 getRaySphere(float fovx, float fovy, bool stereoscopic) {
+  vec3 ray;
+  if (stereoscopic) {
+    ray = vec3(-sin((texcoord.x*2)*fovx)*sin((texcoord.y)*fovy),
+      -cos((texcoord.y)*fovy),
+      cos((texcoord.x*2)*fovx)*sin((texcoord.y)*fovy));
+  } else {
+    ray = vec3(-sin((texcoord.x)*fovx)*sin((texcoord.y)*fovy),
+      -cos((texcoord.y)*fovy),
+      cos((texcoord.x)*fovx)*sin((texcoord.y)*fovy));
+  }
   return rotate(cameraDir, ray);
 }
 
@@ -949,9 +968,8 @@ bool skipChunk(inout ivec3 current, vec3 vector, inout ivec3 chunkPos, vec3 dir,
 }
 //TODO chunkId
 
-void trace(inout ivec3 current, vec3 vector, vec3 dir, vec3 pos, vec3 inc, ivec3 iinc) {
+void trace(inout ivec3 current, vec3 vector, vec3 dir, vec3 pos, ivec3 chunkPos, vec3 inc, ivec3 iinc, ivec3 offset) {
   ivec3 last = ivec3(current.xyz);
-  ivec3 chunkPos = ivec3(renderDistance, chunkHeight, renderDistance);
   int worldWidth = renderDistance*2+1;
   int chunkId = location[chunkPos.z*worldWidth*16 + chunkPos.x*16 + chunkPos.y];
   //TODO if player is above the world
@@ -1048,47 +1066,96 @@ void trace(inout ivec3 current, vec3 vector, vec3 dir, vec3 pos, vec3 inc, ivec3
       metadata = blockMetadata[(metadataId-1)*CHUNK_SIZE + (current.y<<8) + (current.z<<4) + current.x];
     }
     
+    chunkPos += offset; //TODO understand what this does
     if (current.x != last.x) {
+      float distanceX = current.x+16*(chunkPos.x-renderDistance)-pos.x;
       if (current.x > last.x) {
-        texX = (dir.z*(current.x+16*(chunkPos.x-renderDistance)-pos.x)/dir.x)-(current.z+16*(chunkPos.z-renderDistance)-pos.z);
-        texY = 1-((dir.y*(current.x+16*(chunkPos.x-renderDistance)-pos.x)/dir.x)-(current.y+16*(chunkPos.y-chunkHeight)-pos.y));
+        texX = mod(distanceX*dir.z/dir.x + pos.z, 1);
+        texY = mod(-(distanceX*dir.y/dir.x + pos.y), 1);
         side = 4;
       } else {
-        texX = 1-((dir.z*(current.x+16*(chunkPos.x-renderDistance)+1-pos.x)/dir.x)-(current.z+16*(chunkPos.z-renderDistance)-pos.z));
-        texY = 1-((dir.y*(current.x+16*(chunkPos.x-renderDistance)+1-pos.x)/dir.x)-(current.y+16*(chunkPos.y-chunkHeight)-pos.y));
+        texX = mod(-((distanceX+1)*dir.z/dir.x + pos.z), 1);
+        texY = mod(-((distanceX+1)*dir.y/dir.x + pos.y), 1);
         side = 5;
       }
     } else if (current.y != last.y) {
+      float distanceY = current.y + 16*(chunkPos.y-chunkHeight) - pos.y;
       if (current.y > last.y) {
-        texX = (dir.x*(current.y+16*(chunkPos.y-chunkHeight)-pos.y)/dir.y)-(current.x+16*(chunkPos.x-renderDistance)-pos.x);
-        texY = 1-((dir.z*(current.y+16*(chunkPos.y-chunkHeight)-pos.y)/dir.y)-(current.z+16*(chunkPos.z-renderDistance)-pos.z));
+        texX = mod(distanceY*dir.x/dir.y + pos.x, 1);
+        texY = mod(-(distanceY*dir.z/dir.y + pos.z), 1);
         side = 0;
       } else {
-        texX = (dir.x*(current.y+16*(chunkPos.y-chunkHeight)+1-pos.y)/dir.y)-(current.x+16*(chunkPos.x-renderDistance)-pos.x);
-        texY = (dir.z*(current.y+16*(chunkPos.y-chunkHeight)+1-pos.y)/dir.y)-(current.z+16*(chunkPos.z-renderDistance)-pos.z);
+        texX = mod((distanceY+1)*dir.x/dir.y + pos.x, 1);
+        texY = mod((distanceY+1)*dir.z/dir.y + pos.z, 1);
         side = 1;
       }
     } else { //if (current.z != last.z) {
+      float distanceZ = current.z + 16*(chunkPos.z-renderDistance) - pos.z;
       if (current.z > last.z) {
-        texX = 1-((dir.x*(current.z+16*(chunkPos.z-renderDistance)-pos.z)/dir.z)-(current.x+16*(chunkPos.x-renderDistance)-pos.x));
-        texY = 1-((dir.y*(current.z+16*(chunkPos.z-renderDistance)-pos.z)/dir.z)-(current.y+16*(chunkPos.y-chunkHeight)-pos.y));
+        texX = mod(-(distanceZ*dir.x/dir.z + pos.x), 1);
+        texY = mod(-(distanceZ*dir.y/dir.z + pos.y), 1);
         side = 2;
       } else {
-        texX = (dir.x*(current.z+16*(chunkPos.z-renderDistance)+1-pos.z)/dir.z)-(current.x+16*(chunkPos.x-renderDistance)-pos.x);
-        texY = 1-((dir.y*(current.z+16*(chunkPos.z-renderDistance)+1-pos.z)/dir.z)-(current.y+16*(chunkPos.y-chunkHeight)-pos.y));
+        texX = mod((distanceZ+1)*dir.x/dir.z + pos.x, 1);
+        texY = mod(-((distanceZ+1)*dir.y/dir.z + pos.y), 1);
         side = 3;
       }
     }
+    chunkPos -= offset;
     blockFound = drawTexture(blockId, side, texX, texY, light, metadata);
   }
 }
 
 void main(void) {
-  //vec3 dir = getRaySphere(2*M_PI, M_PI);
-  vec3 dir = getRayFlat(fovx, fovy);
+  vec3 dir;
+  if (spherical) {
+    dir = getRaySphere(2*M_PI, M_PI, stereoscopic3d);
+  } else {
+    dir = getRayFlat(fovx, fovy, stereoscopic3d);
+  }
   vec3 point = vec3(cameraPos);
+  ivec3 chunkPos = ivec3(renderDistance, chunkHeight, renderDistance);
+  
+  ivec3 offset = ivec3(0, 0, 0);
+  //3D
+  if (stereoscopic3d) {
+    if (spherical) {
+      if (texcoord.x < 0.5) {
+        point.x += (eyeWidth/2)*dir.z/sqrt(dir.x*dir.x + dir.z*dir.z);
+        point.z -= (eyeWidth/2)*dir.x/sqrt(dir.x*dir.x + dir.z*dir.z);
+      } else {
+        point.x -= (eyeWidth/2)*dir.z/sqrt(dir.x*dir.x + dir.z*dir.z);
+        point.z += (eyeWidth/2)*dir.x/sqrt(dir.x*dir.x + dir.z*dir.z);
+      }
+    } else {// !spherical
+      if (texcoord.x < 0.5) {
+        point.x -= (eyeWidth/2)*cos(cameraDir.y);
+        point.z -= (eyeWidth/2)*sin(cameraDir.y);
+      } else {
+        point.x += (eyeWidth/2)*cos(cameraDir.y);
+        point.z += (eyeWidth/2)*sin(cameraDir.y);
+      }
+    }
+    //Readjust chunkPos for 3d offset
+    ivec3 cameraFloor = ivec3(floor(cameraPos/16));
+    ivec3 pointFloor = ivec3(floor(point/16));
+    if (cameraFloor.x > pointFloor.x) {
+      chunkPos.x--;
+      offset.x = 1;
+    } else if (cameraFloor.x < pointFloor.x) {
+      chunkPos.x++;
+      offset.x = -1;
+    }
+    if (cameraFloor.z > pointFloor.z) {
+      chunkPos.z--;
+      offset.z = 1;
+    } else if (cameraFloor.z < pointFloor.z) {
+      chunkPos.z++;
+      offset.z = -1;
+    }
+  }
+  
   ivec3 current = ivec3(floor(point))%16;
-	//color = texture(tex, texcoord);
   
   //nearest cube (not really a vector)
   vec3 vector;
@@ -1133,5 +1200,5 @@ void main(void) {
       iinc.z = -1;
   }
   
-  trace(current, vector, dir, mod(cameraPos, 16), inc, iinc);
+  trace(current, vector, dir, mod(point, 16), chunkPos, inc, iinc, offset);
 }

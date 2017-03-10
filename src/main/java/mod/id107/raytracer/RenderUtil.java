@@ -13,6 +13,7 @@ import org.lwjgl.opengl.GL30;
 import org.lwjgl.opengl.GL43;
 
 import mod.id107.raytracer.coretransform.CLTLog;
+import mod.id107.raytracer.gui.RayTracerSettings;
 import mod.id107.raytracer.world.WorldLoader;
 import net.minecraft.block.Block;
 import net.minecraft.client.Minecraft;
@@ -79,6 +80,12 @@ public class RenderUtil {
 		GL20.glUniform1f(fovyUniform, fov);
 		int fovxUniform = GL20.glGetUniformLocation(shader.getShaderProgram(), "fovx");
 		GL20.glUniform1f(fovxUniform, fov*Display.getWidth()/(float)Display.getHeight());
+		int sphericalUniform = GL20.glGetUniformLocation(shader.getShaderProgram(), "spherical");
+		GL20.glUniform1i(sphericalUniform, RayTracerSettings.spherical ? 1 : 0);
+		int stereoscopicUniform = GL20.glGetUniformLocation(shader.getShaderProgram(), "stereoscopic3d");
+		GL20.glUniform1i(stereoscopicUniform, RayTracerSettings.stereoscopic ? 1 : 0);
+		int eyeWidthUniform = GL20.glGetUniformLocation(shader.getShaderProgram(), "eyeWidth");
+		GL20.glUniform1f(eyeWidthUniform, 0.063f); //TODO input eyeWidth option
 		
 		if (!pauseRendering) {
 			if (worldLoader == null) {

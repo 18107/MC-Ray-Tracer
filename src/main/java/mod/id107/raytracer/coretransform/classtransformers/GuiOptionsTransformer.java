@@ -23,7 +23,7 @@ import org.objectweb.asm.Type;
 public class GuiOptionsTransformer extends ClassTransformer {
 
 	@Override
-	public String getObfuscatedClassName() {return "bhg";}
+	public String getObfuscatedClassName() {return "bhi";}
 
 	@Override
 	public String getClassName() {return "net.minecraft.client.gui.GuiOptions";}
@@ -64,7 +64,7 @@ public class GuiOptionsTransformer extends ClassTransformer {
 			public String getMethodName() {return CoreLoader.isObfuscated ? "a" : "actionPerformed";}
 			
 			@Override
-			public String getDescName() {return "(L" + (CoreLoader.isObfuscated ? "bfk" : Type.getInternalName(GuiButton.class)) + ";)V";}
+			public String getDescName() {return "(L" + (CoreLoader.isObfuscated ? "bfm" : Type.getInternalName(GuiButton.class)) + ";)V";}
 			
 			@Override
 			public void transform(ClassNode classNode, MethodNode method, boolean obfuscated) {

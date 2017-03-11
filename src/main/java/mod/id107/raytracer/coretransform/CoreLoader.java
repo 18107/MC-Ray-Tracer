@@ -4,7 +4,7 @@ import java.util.Map;
 
 import net.minecraftforge.fml.relauncher.IFMLLoadingPlugin;
 
-@IFMLLoadingPlugin.MCVersion("1.11")
+@IFMLLoadingPlugin.MCVersion("1.11.2")
 @IFMLLoadingPlugin.TransformerExclusions(value = "mod.id107.raytracer.coretransform.")
 @IFMLLoadingPlugin.Name(CoreLoader.NAME)
 @IFMLLoadingPlugin.SortingIndex(value = 999)

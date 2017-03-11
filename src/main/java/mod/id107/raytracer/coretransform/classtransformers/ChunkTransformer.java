@@ -22,7 +22,7 @@ public class ChunkTransformer extends ClassTransformer {
 
 	@Override
 	public String getObfuscatedClassName() {
-		return "aum";
+		return "auo";
 	}
 
 	@Override
@@ -37,7 +37,7 @@ public class ChunkTransformer extends ClassTransformer {
 			public String getMethodName() {return CoreLoader.isObfuscated ? "a" : "setBlockState";}
 			public String getDescName() {
 				if (CoreLoader.isObfuscated) {
-					return "(Lco;Latj;)Latj;";
+					return "(Lco;Latl;)Latl;";
 				} else {
 					return "(L" + Type.getInternalName(BlockPos.class) +
 							";L" + Type.getInternalName(IBlockState.class) +

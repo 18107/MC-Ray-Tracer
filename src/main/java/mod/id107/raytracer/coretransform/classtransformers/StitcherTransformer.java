@@ -20,7 +20,7 @@ public class StitcherTransformer extends ClassTransformer {
 
 	@Override
 	public String getObfuscatedClassName() {
-		return "byt";
+		return "byw";
 	}
 
 	@Override

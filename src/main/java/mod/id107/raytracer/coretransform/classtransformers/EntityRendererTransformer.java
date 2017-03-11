@@ -21,7 +21,7 @@ public class EntityRendererTransformer extends ClassTransformer {
 
 	@Override
 	public String getObfuscatedClassName() {
-		return "bqc";
+		return "bqe";
 	}
 
 	@Override
@@ -63,7 +63,7 @@ public class EntityRendererTransformer extends ClassTransformer {
 			}
 		};
 		
-		//FIXME
+		//FIXME wtf is going on here?
 		MethodTransformer transformRenderWorld = new MethodTransformer() {
 			public String getMethodName() {return CoreLoader.isObfuscated ? "a" : "renderWorldPass";}
 			public String getDescName() {return "(IFJ)V";}

@@ -91,8 +91,8 @@ public class RenderUtil {
 			if (worldLoader == null) {
 				worldLoader = new WorldLoader();
 			}
-			if (worldLoader.dimension != mc.theWorld.provider.getDimension()) {
-				worldLoader.dimension = mc.theWorld.provider.getDimension();
+			if (worldLoader.dimension != mc.world.provider.getDimension()) {
+				worldLoader.dimension = mc.world.provider.getDimension();
 			}
 			worldLoader.updateWorld(entityPosX, entityPosY, entityPosZ, shader);
 

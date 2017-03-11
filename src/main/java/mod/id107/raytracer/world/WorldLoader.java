@@ -85,7 +85,7 @@ public class WorldLoader {
 	 * @return if the chunk exists
 	 */
 	public boolean updateChunk(int x, int z) {
-		Chunk chunk = mc.theWorld.getChunkFromChunkCoords(x, z);
+		Chunk chunk = mc.world.getChunkFromChunkCoords(x, z);
 		ExtendedBlockStorage[] storage = chunk.getBlockStorageArray();
 		for (int y = 0; y < 16; y++) {
 			if (storage[y] != null) {
@@ -117,7 +117,7 @@ public class WorldLoader {
 	 * @return if the chunk exists
 	 */
 	public boolean updateChunkFirst(int x, int z) {
-		Chunk chunk = mc.theWorld.getChunkFromChunkCoords(x, z);
+		Chunk chunk = mc.world.getChunkFromChunkCoords(x, z);
 		ExtendedBlockStorage[] storage = chunk.getBlockStorageArray();
 		for (int y = 0; y < 16; y++) {
 			if (storage[y] != null) {
@@ -449,7 +449,7 @@ public class WorldLoader {
 		int chunkX = centerX + (positive ? renderDistance-1 : -(renderDistance-1));
 		for (int z = 0; z < renderDistance*2-1; z++) {
 			int chunkZ = centerZ+z-(renderDistance-1);
-			Chunk chunk = mc.theWorld.getChunkFromChunkCoords(chunkX, chunkZ);
+			Chunk chunk = mc.world.getChunkFromChunkCoords(chunkX, chunkZ);
 			ExtendedBlockStorage[] storage = chunk.getBlockStorageArray();
 			for (int y = 0; y < 16; y++) {
 				worldChunks[z*(renderDistance*2-1)*16 + (positive ? renderDistance*2-2 : 0)*16 + y] = 0;
@@ -507,7 +507,7 @@ public class WorldLoader {
 		int chunkZ = centerZ + (positive ? renderDistance-1 : -(renderDistance-1));
 		for (int x = 0; x < renderDistance*2-1; x++) {
 			int chunkX = centerX+x-(renderDistance-1);
-			Chunk chunk = mc.theWorld.getChunkFromChunkCoords(chunkX, chunkZ);
+			Chunk chunk = mc.world.getChunkFromChunkCoords(chunkX, chunkZ);
 			ExtendedBlockStorage[] storage = chunk.getBlockStorageArray();
 			for (int y = 0; y < 16; y++) {
 				worldChunks[(positive ? renderDistance*2-2 : 0)*(renderDistance*2-1)*16 + x*16 + y] = 0;

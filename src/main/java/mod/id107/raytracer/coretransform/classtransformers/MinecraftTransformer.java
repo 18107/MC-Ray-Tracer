@@ -18,7 +18,7 @@ import net.minecraft.client.multiplayer.WorldClient;
 public class MinecraftTransformer extends ClassTransformer {
 	
 	@Override
-	public String getObfuscatedClassName() {return "beq";}
+	public String getObfuscatedClassName() {return "bes";}
 	
 	@Override
 	public String getClassName() {return "net.minecraft.client.Minecraft";}
@@ -27,7 +27,7 @@ public class MinecraftTransformer extends ClassTransformer {
 	public MethodTransformer[] getMethodTransformers() {
 		MethodTransformer loadWorldTransformer = new MethodTransformer() {
 			public String getMethodName() {return CoreLoader.isObfuscated ? "a" : "loadWorld";}
-			public String getDescName() {return "(L" + (CoreLoader.isObfuscated ? "bno" : Type.getInternalName(WorldClient.class)) + ";Ljava/lang/String;)V";}
+			public String getDescName() {return "(L" + (CoreLoader.isObfuscated ? "bnq" : Type.getInternalName(WorldClient.class)) + ";Ljava/lang/String;)V";}
 			
 			public void transform(ClassNode classNode, MethodNode method, boolean obfuscated) {
 				CLTLog.info("Found method: " + method.name + " " + method.desc);

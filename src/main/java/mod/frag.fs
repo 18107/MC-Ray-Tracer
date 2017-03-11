@@ -112,7 +112,7 @@ vec3 getRaySphere(float fovx, float fovy, bool stereoscopic) {
 }
 
 bool drawTexture(int id, int side, float xIn, float yIn, int light, int metadata) {
-  float x = 12;
+  float x = 13;
   float y = 24;
   switch (id) {
   case 1: //stone

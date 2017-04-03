@@ -36,6 +36,9 @@ public class EntityRendererTransformer extends ClassTransformer {
 			public String getMethodName() {return CoreLoader.isObfuscated ? "a" : "setupCameraTransform";}
 			public String getDescName() {return "(FI)V";}
 			
+			/**
+			 * Transforms {@link net.minecraft.client.renderer.EntityRenderer#setupCameraTransform()}
+			 */
 			public void transform(ClassNode classNode, MethodNode method, boolean obfuscated) {
 				CLTLog.info("Found method: " + method.name + " " + method.desc);
 				for (AbstractInsnNode instruction : method.instructions.toArray()) {
@@ -63,54 +66,7 @@ public class EntityRendererTransformer extends ClassTransformer {
 			}
 		};
 		
-		//FIXME wtf is going on here?
-		MethodTransformer transformRenderWorld = new MethodTransformer() {
-			public String getMethodName() {return CoreLoader.isObfuscated ? "a" : "renderWorldPass";}
-			public String getDescName() {return "(IFJ)V";}
-			
-			public void transform(ClassNode classNode, MethodNode method, boolean obfuscated) {
-				AbstractInsnNode instruction = method.instructions.getLast();
-				for (int i = 0; i < 5; i++) {
-					instruction = instruction.getPrevious();
-				}
-				
-				method.instructions.insert(instruction, new MethodInsnNode(INVOKESTATIC,
-						Type.getInternalName(TransformerUtil.class), "runShader", "()V", false));
-			}
-			
-		};
-		
-		MethodTransformer transformRenderWorldPass = new MethodTransformer() {
-			public String getMethodName() {return CoreLoader.isObfuscated ? "a" : "renderWorldPass";}
-			public String getDescName() {return "(IFJ)V";}
-			
-			@Override
-			public void transform(ClassNode classNode, MethodNode method, boolean obfuscated) {
-				CLTLog.info("Found method: " + method.name + " " + method.desc);
-				for (AbstractInsnNode instruction : method.instructions.toArray()) {
-					
-					//find renderglobal.renderBlockLayer(BlockRenderLayer.SOLID, (double)partialTicks, pass, entity);
-					if (instruction.getOpcode() == F2D &&
-						instruction.getNext().getOpcode() == ILOAD) {
-						CLTLog.info("found F2D in method " + getMethodName());
-						
-						//Go to start of method call
-						for (int i = 0; i < 4+3; i++) {
-							instruction = instruction.getPrevious();
-						}
-						
-						//remove method call
-						for (int i = 0; i < 8+3+41; i++) {
-							method.instructions.remove(instruction.getNext());
-						}
-						
-						break;
-					}
-				}
-			}
-		};
-		
-		return new MethodTransformer[] {transformSetupCameraTransform, transformRenderWorld, transformRenderWorldPass};
+		return new MethodTransformer[] {transformSetupCameraTransform};
 	}
 
 }

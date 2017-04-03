@@ -18,10 +18,13 @@ import mod.id107.raytracer.RenderUtil;
 import mod.id107.raytracer.Shader;
 import mod.id107.raytracer.coretransform.CLTLog;
 import net.minecraft.block.Block;
+import net.minecraft.block.state.IBlockState;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.multiplayer.WorldClient;
+import net.minecraft.util.ObjectIntIdentityMap;
 import net.minecraft.world.chunk.Chunk;
 import net.minecraft.world.chunk.storage.ExtendedBlockStorage;
+import net.minecraftforge.fml.common.registry.GameData;
 
 public class WorldLoader {
 
@@ -344,12 +347,25 @@ public class WorldLoader {
 		}
 	}
 	
+	Set<IBlockState> stateSet = new HashSet<IBlockState>();
+	
 	//TODO handle lighting and metadata
 	private void loadChunk(int id, Shader shader, ExtendedBlockStorage storage) {
+		ObjectIntIdentityMap<IBlockState> map = GameData.getBlockStateIDMap();
 		int[] data = new int[chunkSize*2];
 		for (int y = 0; y < 16; y++) {
 			for (int z = 0; z < 16; z++) {
 				for (int x = 0; x < 16; x++) {
+					IBlockState state = storage.get(x, y, z);
+					boolean fullBlock = state.isFullBlock();
+					boolean cube = state.isFullCube();
+					if (fullBlock != cube) {
+						Log.info(state.getBlock().getUnlocalizedName() + ": " + fullBlock);
+					}
+					if (fullBlock) {
+						stateSet.add(state);
+					}
+					int stateId = map.get(state); //TODO
 					data[(y<<9) + (z<<5) + (x<<1)] = Block.getIdFromBlock(storage.get(x, y, z).getBlock());
 				}
 			}

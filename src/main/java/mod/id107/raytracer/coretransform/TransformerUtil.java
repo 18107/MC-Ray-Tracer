@@ -9,6 +9,7 @@ import com.google.common.collect.Lists;
 import mod.id107.raytracer.RenderUtil;
 import mod.id107.raytracer.TextureFinder;
 import mod.id107.raytracer.gui.RayTracerSettings;
+import mod.id107.raytracer.world.TextureData;
 import net.minecraft.block.Block;
 import net.minecraft.block.state.IBlockState;
 import net.minecraft.client.Minecraft;
@@ -55,14 +56,6 @@ public class TransformerUtil {
 	
 	/**
 	 * Called from asm modified code:
-	 * {@link net.minecraft.client.renderer.EntityRenderer#renderWorld() renderWorld}
-	 */
-	public static void runShader() {
-		RenderUtil.runShader();
-	}
-	
-	/**
-	 * Called from asm modified code:
 	 * {@link net.minecraft.world.chunk.Chunk#setBlockState() setBlockState}
 	 */
 	public static void onChunkModified(Chunk chunk) {
@@ -92,9 +85,6 @@ public class TransformerUtil {
 			textureMap.put(slot.getStitchHolder().getAtlasSprite().getIconName(), texture);
 		}
 		
-		Block block = Block.getBlockById(1);
-		ResourceLocation location = block.getRegistryName();
-		
-		RenderUtil.textureMap = textureMap;
+		TextureData.textureMap = textureMap;
 	}
 }

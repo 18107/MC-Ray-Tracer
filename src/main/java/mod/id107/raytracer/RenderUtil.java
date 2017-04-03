@@ -28,7 +28,10 @@ public class RenderUtil {
 	public static WorldLoader worldLoader; //TODO multiple dimensions
 	public static boolean pauseRendering = false;
 	
-	public static Map<String, TextureFinder> textureMap = null;
+	/**
+	 * Enables or disables ray tracing
+	 */
+	public static boolean rayTracingEnabled = true;
 	
 	public static void createShader() {
 		if (shader == null) {

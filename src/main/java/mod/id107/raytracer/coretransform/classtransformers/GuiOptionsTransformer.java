@@ -11,6 +11,9 @@ import org.objectweb.asm.tree.VarInsnNode;
 import mod.id107.raytracer.coretransform.CLTLog;
 import mod.id107.raytracer.coretransform.CoreLoader;
 import mod.id107.raytracer.coretransform.TransformerUtil;
+import mod.id107.raytracer.coretransform.classtransformers.name.ClassName;
+import mod.id107.raytracer.coretransform.classtransformers.name.MethodName;
+import mod.id107.raytracer.coretransform.classtransformers.name.Names;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.gui.GuiButton;
 
@@ -23,10 +26,9 @@ import org.objectweb.asm.Type;
 public class GuiOptionsTransformer extends ClassTransformer {
 
 	@Override
-	public String getObfuscatedClassName() {return "bhi";}
-
-	@Override
-	public String getClassName() {return "net.minecraft.client.gui.GuiOptions";}
+	public ClassName getClassName() {
+		return Names.GuiOptions;
+	}
 
 	@Override
 	public MethodTransformer[] getMethodTransformers() {
@@ -34,10 +36,9 @@ public class GuiOptionsTransformer extends ClassTransformer {
 		MethodTransformer transformInitGui = new MethodTransformer() {
 			
 			@Override
-			public String getMethodName() {return CoreLoader.isObfuscated ? "b" : "initGui";}
-			
-			@Override
-			public String getDescName() {return "()V";}
+			public MethodName getMethodName() {
+				return Names.GuiOptions_initGui;
+			}
 			
 			@Override
 			public void transform(ClassNode classNode, MethodNode method, boolean obfuscated) {
@@ -50,9 +51,9 @@ public class GuiOptionsTransformer extends ClassTransformer {
 				toInsert.add(new VarInsnNode(ALOAD, 0)); //this
 				toInsert.add(new VarInsnNode(ALOAD, 0)); //this
 				toInsert.add(new FieldInsnNode(GETFIELD, classNode.name,
-					obfuscated ? "field_146292_n" : "buttonList", "L" + Type.getInternalName(List.class) + ";")); //buttonList
+					Names.GuiScreen_buttonList.getFullName(obfuscated), "L" + Type.getInternalName(List.class) + ";")); //buttonList
 				toInsert.add(new MethodInsnNode(INVOKESTATIC, Type.getInternalName(TransformerUtil.class),
-					"addButtonsToGuiOptions", "(L" + classNode.name + ";L" + Type.getInternalName(List.class) + ";)V", false));
+					"addButtonsToGuiOptions", "(L" + Names.GuiOptions.getInternalName(obfuscated) + ";L" + Type.getInternalName(List.class) + ";)V", false));
 				
 				method.instructions.insert(instruction, toInsert);
 			}
@@ -61,10 +62,9 @@ public class GuiOptionsTransformer extends ClassTransformer {
 		MethodTransformer transformActionPerformed = new MethodTransformer() {
 			
 			@Override
-			public String getMethodName() {return CoreLoader.isObfuscated ? "a" : "actionPerformed";}
-			
-			@Override
-			public String getDescName() {return "(L" + (CoreLoader.isObfuscated ? "bfm" : Type.getInternalName(GuiButton.class)) + ";)V";}
+			public MethodName getMethodName() {
+				return Names.GuiOptions_actionPerformed;
+			}
 			
 			@Override
 			public void transform(ClassNode classNode, MethodNode method, boolean obfuscated) {
@@ -78,7 +78,7 @@ public class GuiOptionsTransformer extends ClassTransformer {
 				toInsert.add(new VarInsnNode(ALOAD, 0)); //this
 				toInsert.add(new VarInsnNode(ALOAD, 1)); //button
 				toInsert.add(new MethodInsnNode(INVOKESTATIC, Type.getInternalName(TransformerUtil.class),
-						"addButtonAction", "(L" + classNode.name + ";L" + Type.getInternalName(GuiButton.class) + ";)V", false));
+						"addButtonAction", "(L" + Names.GuiOptions.getInternalName(obfuscated) + ";L" + Names.GuiButton.getInternalName(obfuscated) + ";)V", false));
 				
 				method.instructions.insert(instruction, toInsert);
 			}

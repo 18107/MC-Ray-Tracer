@@ -13,21 +13,24 @@ import org.objectweb.asm.tree.VarInsnNode;
 import mod.id107.raytracer.coretransform.CLTLog;
 import mod.id107.raytracer.coretransform.CoreLoader;
 import mod.id107.raytracer.coretransform.TransformerUtil;
+import mod.id107.raytracer.coretransform.classtransformers.name.ClassName;
+import mod.id107.raytracer.coretransform.classtransformers.name.MethodName;
+import mod.id107.raytracer.coretransform.classtransformers.name.Names;
 import net.minecraft.client.multiplayer.WorldClient;
 
 public class MinecraftTransformer extends ClassTransformer {
 	
 	@Override
-	public String getObfuscatedClassName() {return "bes";}
-	
-	@Override
-	public String getClassName() {return "net.minecraft.client.Minecraft";}
+	public ClassName getClassName() {
+		return Names.Minecraft;
+	}
 
 	@Override
 	public MethodTransformer[] getMethodTransformers() {
 		MethodTransformer loadWorldTransformer = new MethodTransformer() {
-			public String getMethodName() {return CoreLoader.isObfuscated ? "a" : "loadWorld";}
-			public String getDescName() {return "(L" + (CoreLoader.isObfuscated ? "bnq" : Type.getInternalName(WorldClient.class)) + ";Ljava/lang/String;)V";}
+			public MethodName getMethodName() {
+				return Names.Minecraft_loadWorld;
+			}
 			
 			public void transform(ClassNode classNode, MethodNode method, boolean obfuscated) {
 				CLTLog.info("Found method: " + method.name + " " + method.desc);

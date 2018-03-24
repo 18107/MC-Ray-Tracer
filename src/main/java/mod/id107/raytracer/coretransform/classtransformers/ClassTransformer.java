@@ -3,6 +3,9 @@ package mod.id107.raytracer.coretransform.classtransformers;
 import org.objectweb.asm.tree.ClassNode;
 import org.objectweb.asm.tree.MethodNode;
 
+import mod.id107.raytracer.coretransform.classtransformers.name.ClassName;
+import mod.id107.raytracer.coretransform.classtransformers.name.MethodName;
+
 /**
  * Holds all of the class transformers.
  *
@@ -17,14 +20,9 @@ public abstract class ClassTransformer {
 	}
 	
 	/**
-	 * @return the obfuscated name of the class
-	 */
-	public abstract String getObfuscatedClassName();
-	
-	/**
 	 * @return the name of the class
 	 */
-	public abstract String getClassName();
+	public abstract ClassName getClassName();
 	
 	/**
 	 * @return an array containing all method transformers for this class transformer
@@ -40,8 +38,7 @@ public abstract class ClassTransformer {
 	
 	//Template for a method transformer
 	public static abstract class MethodTransformer {
-		public abstract String getMethodName();
-		public abstract String getDescName();
 		public abstract void transform(ClassNode classNode, MethodNode method, boolean obfuscated);
+		public abstract MethodName getMethodName();
 	}
 }

@@ -12,6 +12,9 @@ import org.objectweb.asm.tree.VarInsnNode;
 import mod.id107.raytracer.coretransform.CLTLog;
 import mod.id107.raytracer.coretransform.CoreLoader;
 import mod.id107.raytracer.coretransform.TransformerUtil;
+import mod.id107.raytracer.coretransform.classtransformers.name.ClassName;
+import mod.id107.raytracer.coretransform.classtransformers.name.MethodName;
+import mod.id107.raytracer.coretransform.classtransformers.name.Names;
 import net.minecraft.block.state.IBlockState;
 import net.minecraft.client.multiplayer.WorldClient;
 import net.minecraft.util.math.BlockPos;
@@ -21,28 +24,16 @@ import static org.objectweb.asm.Opcodes.*;
 public class ChunkTransformer extends ClassTransformer {
 
 	@Override
-	public String getObfuscatedClassName() {
-		return "auo";
-	}
-
-	@Override
-	public String getClassName() {
-		return "net.minecraft.world.chunk.Chunk";
+	public ClassName getClassName() {
+		return Names.Chunk;
 	}
 
 	@Override
 	public MethodTransformer[] getMethodTransformers() {
 		
 		MethodTransformer transformSetBlockState = new MethodTransformer() {
-			public String getMethodName() {return CoreLoader.isObfuscated ? "a" : "setBlockState";}
-			public String getDescName() {
-				if (CoreLoader.isObfuscated) {
-					return "(Lco;Latl;)Latl;";
-				} else {
-					return "(L" + Type.getInternalName(BlockPos.class) +
-							";L" + Type.getInternalName(IBlockState.class) +
-							";)L" + Type.getInternalName(IBlockState.class) + ";";
-				}
+			public MethodName getMethodName() {
+				return Names.Chunk_setBlockState;
 			}
 
 			@Override

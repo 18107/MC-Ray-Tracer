@@ -12,6 +12,9 @@ import org.objectweb.asm.Type;
 import mod.id107.raytracer.RenderUtil;
 import mod.id107.raytracer.coretransform.CLTLog;
 import mod.id107.raytracer.coretransform.CoreLoader;
+import mod.id107.raytracer.coretransform.classtransformers.name.ClassName;
+import mod.id107.raytracer.coretransform.classtransformers.name.MethodName;
+import mod.id107.raytracer.coretransform.classtransformers.name.Names;
 import net.minecraft.client.renderer.Tessellator;
 import net.minecraft.client.renderer.VertexBuffer;
 import net.minecraft.client.renderer.culling.ICamera;
@@ -25,13 +28,8 @@ import static org.objectweb.asm.Opcodes.*;
 public class RenderGlobalTransformer extends ClassTransformer {
 
 	@Override
-	public String getObfuscatedClassName() {
-		return "bqm";
-	}
-
-	@Override
-	public String getClassName() {
-		return "net.minecraft.client.renderer.RenderGlobal";
+	public ClassName getClassName() {
+		return Names.RenderGlobal;
 	}
 
 	@Override
@@ -40,9 +38,9 @@ public class RenderGlobalTransformer extends ClassTransformer {
 		//TODO renderParticles
 		
 		MethodTransformer transformRenderEntities = new MethodTransformer() {
-			public String getMethodName() {return CoreLoader.isObfuscated ? "a" : "renderEntities";}
-			public String getDescName() {return "(L" + Type.getInternalName(Entity.class) + ";L" +
-					Type.getInternalName(ICamera.class) + ";F)V";}
+			public MethodName getMethodName() {
+				return Names.RenderGlobal_renderEntities;
+			}
 			
 			/**
 			 * Transforms {@link net.minecraft.client.renderer.RenderGlobal#renderEntities()}
@@ -57,9 +55,9 @@ public class RenderGlobalTransformer extends ClassTransformer {
 		//TODO transformSetupTerrain
 		
 		MethodTransformer transformRenderBlockLayer = new MethodTransformer() {
-			public String getMethodName() {return CoreLoader.isObfuscated ? "a" : "renderBlockLayer";}
-			public String getDescName() {return "(L" + Type.getInternalName(BlockRenderLayer.class) +
-					";DIL" + Type.getInternalName(Entity.class) + ";)I";}
+			public MethodName getMethodName() {
+				return Names.RenderGlobal_renderBlockLayer;
+			}
 			
 			/**
 			 * Transforms {@link net.minecraft.client.renderer.RenderGlobal#renderBlockLayer()}
@@ -72,8 +70,9 @@ public class RenderGlobalTransformer extends ClassTransformer {
 		};
 		
 		MethodTransformer transformRenderSky = new MethodTransformer() {
-			public String getMethodName() {return CoreLoader.isObfuscated ? "a" : "renderSky";}
-			public String getDescName() {return "(FI)V";}
+			public MethodName getMethodName() {
+				return Names.RenderGlobal_renderSky;
+			}
 			
 			/**
 			 * Transforms {@link net.minecraft.client.renderer.RenderGlobal#renderSky()}
@@ -86,8 +85,9 @@ public class RenderGlobalTransformer extends ClassTransformer {
 		};
 		
 		MethodTransformer transformRenderClouds = new MethodTransformer() {
-			public String getMethodName() {return CoreLoader.isObfuscated ? "a" : "renderClouds";}
-			public String getDescName() {return "(FIDDD)V";}
+			public MethodName getMethodName() {
+				return Names.RenderGlobal_renderClouds;
+			}
 			
 			/**
 			 * Transforms {@link net.minecraft.client.renderer.RenderGlobal#renderClouds()}
@@ -102,10 +102,9 @@ public class RenderGlobalTransformer extends ClassTransformer {
 		//TODO transformRenderWorldBorder
 		
 		MethodTransformer transformDrawBlockDamageTexture = new MethodTransformer() {
-			public String getMethodName() {return CoreLoader.isObfuscated ? "a" : "drawBlockDamageTexture";}
-			public String getDescName() {return "(L" + Type.getInternalName(Tessellator.class) +
-					";L" + Type.getInternalName(VertexBuffer.class) + ";L" +
-					Type.getInternalName(Entity.class) + ";F)V";}
+			public MethodName getMethodName() {
+				return Names.RenderGlobal_drawBlockDamageTexture;
+			}
 			
 			/**
 			 * Transforms {@link net.minecraft.client.renderer.RenderGlobal#drawBlockDamageTexture()}
@@ -118,9 +117,9 @@ public class RenderGlobalTransformer extends ClassTransformer {
 		};
 		
 		MethodTransformer transformDrawSelectionBox = new MethodTransformer() {
-			public String getMethodName() {return CoreLoader.isObfuscated ? "a" : "drawSelectionBox";}
-			public String getDescName() {return "(L" + Type.getInternalName(EntityPlayer.class) +
-					";L" + Type.getInternalName(RayTraceResult.class) + ";IF)V";}
+			public MethodName getMethodName() {
+				return Names.RenderGlobal_drawSelectionBox;
+			}
 			
 			/**
 			 * Transforms {@link net.minecraft.client.renderer.RenderGlobal#drawSelectionBox()}

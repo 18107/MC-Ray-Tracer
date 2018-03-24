@@ -37,7 +37,7 @@ public class EventHandler {
 		RenderUtil.pauseRendering = true;
 	}
 	
-	@SubscribeEvent
+	//@SubscribeEvent
 	public void modelBake(ModelBakeEvent e) {
 		IRegistry<ModelResourceLocation, IBakedModel> registry = e.getModelRegistry();
 		Iterator<IBakedModel> iterator = registry.iterator();

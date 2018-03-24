@@ -61,6 +61,14 @@ public class RenderUtil {
 			createShader();
 		}
 		
+		if (shader == null) { //TODO fix when loading the world for the first time.
+			createShader();
+			if (shader == null) {
+				Log.info("Error: shader == null");
+				return;
+			}
+		}
+		
 		//Use shader program
 		GL20.glUseProgram(shader.getShaderProgram());
 		
@@ -94,8 +102,8 @@ public class RenderUtil {
 			if (worldLoader == null) {
 				worldLoader = new WorldLoader();
 			}
-			if (worldLoader.dimension != mc.world.provider.getDimension()) {
-				worldLoader.dimension = mc.world.provider.getDimension();
+			if (worldLoader.dimension != mc.theWorld.provider.getDimension()) {
+				worldLoader.dimension = mc.theWorld.provider.getDimension();
 			}
 			worldLoader.updateWorld(entityPosX, entityPosY, entityPosZ, shader);
 

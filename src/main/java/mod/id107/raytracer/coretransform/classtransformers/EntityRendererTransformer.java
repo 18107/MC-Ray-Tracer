@@ -11,6 +11,9 @@ import org.objectweb.asm.tree.MethodNode;
 import mod.id107.raytracer.coretransform.CLTLog;
 import mod.id107.raytracer.coretransform.CoreLoader;
 import mod.id107.raytracer.coretransform.TransformerUtil;
+import mod.id107.raytracer.coretransform.classtransformers.name.ClassName;
+import mod.id107.raytracer.coretransform.classtransformers.name.MethodName;
+import mod.id107.raytracer.coretransform.classtransformers.name.Names;
 import net.minecraft.client.renderer.GlStateManager;
 
 import static org.objectweb.asm.Opcodes.*;
@@ -20,21 +23,17 @@ import org.objectweb.asm.Type;
 public class EntityRendererTransformer extends ClassTransformer {
 
 	@Override
-	public String getObfuscatedClassName() {
-		return "bqe";
-	}
-
-	@Override
-	public String getClassName() {
-		return "net.minecraft.client.renderer.EntityRenderer";
+	public ClassName getClassName() {
+		return Names.EntityRenderer;
 	}
 
 	@Override
 	public MethodTransformer[] getMethodTransformers() {
 		
 		MethodTransformer transformSetupCameraTransform = new MethodTransformer() {
-			public String getMethodName() {return CoreLoader.isObfuscated ? "a" : "setupCameraTransform";}
-			public String getDescName() {return "(FI)V";}
+			public MethodName getMethodName() {
+				return Names.EntityRenderer_setupCameraTransform;
+			}
 			
 			/**
 			 * Transforms {@link net.minecraft.client.renderer.EntityRenderer#setupCameraTransform()}
@@ -55,8 +54,8 @@ public class EntityRendererTransformer extends ClassTransformer {
 						toInsert.add(new InsnNode(FCONST_0)); //0
 						toInsert.add(new InsnNode(FCONST_0)); //0
 						toInsert.add(new LdcInsnNode(-0.05f)); //-0.05
-						toInsert.add(new MethodInsnNode(INVOKESTATIC, Type.getInternalName(GlStateManager.class),
-								obfuscated ? "func_179109_b" : "translate", "(FFF)V", false));
+						toInsert.add(new MethodInsnNode(INVOKESTATIC, Names.GlStateManager.getInternalName(obfuscated),
+								Names.GlStateManager_translate.getFullName(obfuscated), "(FFF)V", false));
 						
 						method.instructions.insertBefore(instruction, toInsert);
 						

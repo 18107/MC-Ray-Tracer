@@ -11,6 +11,9 @@ import org.objectweb.asm.tree.VarInsnNode;
 import mod.id107.raytracer.coretransform.CLTLog;
 import mod.id107.raytracer.coretransform.CoreLoader;
 import mod.id107.raytracer.coretransform.TransformerUtil;
+import mod.id107.raytracer.coretransform.classtransformers.name.ClassName;
+import mod.id107.raytracer.coretransform.classtransformers.name.MethodName;
+import mod.id107.raytracer.coretransform.classtransformers.name.Names;
 
 import static org.objectweb.asm.Opcodes.*;
 
@@ -19,21 +22,17 @@ import org.objectweb.asm.Type;
 public class StitcherTransformer extends ClassTransformer {
 
 	@Override
-	public String getObfuscatedClassName() {
-		return "byw";
-	}
-
-	@Override
-	public String getClassName() {
-		return "net.minecraft.client.renderer.texture.Stitcher";
+	public ClassName getClassName() {
+		return Names.Stitcher;
 	}
 
 	@Override
 	public MethodTransformer[] getMethodTransformers() {
 		
 		MethodTransformer transformDoStitch = new MethodTransformer() {
-			public String getMethodName() {return CoreLoader.isObfuscated ? "c" : "doStitch";}
-			public String getDescName() {return "()V";}
+			public MethodName getMethodName() {
+				return Names.Stitcher_doStitch;
+			}
 			
 			@Override
 			public void transform(ClassNode classNode, MethodNode method, boolean obfuscated) {
@@ -49,8 +48,9 @@ public class StitcherTransformer extends ClassTransformer {
 				
 				//TransformerUtil.createTextureMap(stitchSlots);
 				toInsert.add(new VarInsnNode(ALOAD, 0)); //this
-				toInsert.add(new FieldInsnNode(GETFIELD, classNode.name,
-						obfuscated ? "field_94317_b" : "stitchSlots", "Ljava/util/List;")); //stitchSlots
+				toInsert.add(new FieldInsnNode(GETFIELD, Names.Stitcher.getInternalName(),
+						Names.Stitcher_stitchSlots.getFullName(obfuscated),
+						Names.Stitcher_stitchSlots.getDesc(obfuscated))); //stitchSlots
 				toInsert.add(new MethodInsnNode(INVOKESTATIC, Type.getInternalName(TransformerUtil.class),
 						"createTextureMap", "(Ljava/util/List;)V", false)); //TransformerUtil.createTextureMap
 				

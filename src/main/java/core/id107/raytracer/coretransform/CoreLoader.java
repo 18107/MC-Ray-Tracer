@@ -1,11 +1,11 @@
-package mod.id107.raytracer.coretransform;
+package core.id107.raytracer.coretransform;
 
 import java.util.Map;
 
 import net.minecraftforge.fml.relauncher.IFMLLoadingPlugin;
 
-@IFMLLoadingPlugin.MCVersion("1.11.2")
-@IFMLLoadingPlugin.TransformerExclusions(value = "mod.id107.raytracer.coretransform.")
+@IFMLLoadingPlugin.MCVersion("1.11")
+@IFMLLoadingPlugin.TransformerExclusions(value = "core.id107.raytracer.coretransform.")
 @IFMLLoadingPlugin.Name(CoreLoader.NAME)
 @IFMLLoadingPlugin.SortingIndex(value = 999)
 public class CoreLoader implements IFMLLoadingPlugin {

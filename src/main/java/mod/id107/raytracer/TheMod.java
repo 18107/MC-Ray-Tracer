@@ -22,6 +22,6 @@ public class TheMod
     public void init(FMLInitializationEvent event)
     {
         Log.info("" + ForgeVersion.mcVersion);
-        MinecraftForge.EVENT_BUS.register(new mod.id107.raytracer.coretransform.EventHandler());
+        MinecraftForge.EVENT_BUS.register(new mod.id107.raytracer.EventHandler());
     }
 }

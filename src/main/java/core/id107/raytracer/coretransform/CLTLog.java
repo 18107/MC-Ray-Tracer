@@ -1,4 +1,4 @@
-package mod.id107.raytracer.coretransform;
+package core.id107.raytracer.coretransform;
 
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;

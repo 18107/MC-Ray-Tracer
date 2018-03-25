@@ -12,7 +12,6 @@ import org.lwjgl.opengl.GL20;
 import org.lwjgl.opengl.GL30;
 import org.lwjgl.opengl.GL43;
 
-import mod.id107.raytracer.coretransform.CLTLog;
 import mod.id107.raytracer.gui.RayTracerSettings;
 import mod.id107.raytracer.world.WorldLoader;
 import net.minecraft.block.Block;
@@ -25,7 +24,7 @@ import net.minecraft.world.chunk.storage.ExtendedBlockStorage;
 public class RenderUtil {
 
 	private static Shader shader;
-	public static WorldLoader worldLoader; //TODO multiple dimensions
+	public static WorldLoader worldLoader; //TODO make worldLoader private
 	public static boolean pauseRendering = false;
 	
 	/**
@@ -40,7 +39,6 @@ public class RenderUtil {
 			if (worldLoader == null) {
 				worldLoader = new WorldLoader();
 			}
-			worldLoader.setReloadWorld();
 		}
 	}
 	
@@ -59,14 +57,6 @@ public class RenderUtil {
 		if (Keyboard.isKeyDown(Keyboard.KEY_NUMPAD5)) {
 			destroyShader();
 			createShader();
-		}
-		
-		if (shader == null) { //TODO fix when loading the world for the first time.
-			createShader();
-			if (shader == null) {
-				Log.info("Error: shader == null");
-				return;
-			}
 		}
 		
 		//Use shader program

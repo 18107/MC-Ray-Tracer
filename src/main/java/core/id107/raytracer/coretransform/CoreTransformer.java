@@ -1,4 +1,4 @@
-package mod.id107.raytracer.coretransform;
+package core.id107.raytracer.coretransform;
 
 import org.objectweb.asm.ClassReader;
 import org.objectweb.asm.ClassVisitor;
@@ -19,8 +19,8 @@ import org.objectweb.asm.tree.MethodInsnNode;
 import org.objectweb.asm.tree.MethodNode;
 import org.objectweb.asm.tree.VarInsnNode;
 
-import mod.id107.raytracer.coretransform.classtransformers.ClassTransformer;
-import mod.id107.raytracer.coretransform.classtransformers.ClassTransformer.MethodTransformer;
+import core.id107.raytracer.coretransform.classtransformers.ClassTransformer;
+import core.id107.raytracer.coretransform.classtransformers.ClassTransformer.MethodTransformer;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.gui.GuiIngame;
 import net.minecraft.client.multiplayer.WorldClient;

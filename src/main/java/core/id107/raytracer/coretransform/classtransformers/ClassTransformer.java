@@ -1,10 +1,10 @@
-package mod.id107.raytracer.coretransform.classtransformers;
+package core.id107.raytracer.coretransform.classtransformers;
 
 import org.objectweb.asm.tree.ClassNode;
 import org.objectweb.asm.tree.MethodNode;
 
-import mod.id107.raytracer.coretransform.classtransformers.name.ClassName;
-import mod.id107.raytracer.coretransform.classtransformers.name.MethodName;
+import core.id107.raytracer.coretransform.classtransformers.name.ClassName;
+import core.id107.raytracer.coretransform.classtransformers.name.MethodName;
 
 /**
  * Holds all of the class transformers.
@@ -16,7 +16,7 @@ public abstract class ClassTransformer {
 	
 	static {
 		//Put all of the class transformers here
-		transformers = new ClassTransformer[] {new MinecraftTransformer(), new StitcherTransformer(), new GuiOptionsTransformer(), new EntityRendererTransformer(), new ChunkTransformer(), new RenderGlobalTransformer()};
+		transformers = new ClassTransformer[] {new MinecraftTransformer(), new StitcherTransformer(), new EntityRendererTransformer(), new ChunkTransformer(), new RenderGlobalTransformer()};
 	}
 	
 	/**

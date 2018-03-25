@@ -16,7 +16,6 @@ import org.lwjgl.opengl.GL43;
 import mod.id107.raytracer.Log;
 import mod.id107.raytracer.RenderUtil;
 import mod.id107.raytracer.Shader;
-import mod.id107.raytracer.coretransform.CLTLog;
 import net.minecraft.block.Block;
 import net.minecraft.block.state.IBlockState;
 import net.minecraft.client.Minecraft;
@@ -75,7 +74,7 @@ public class WorldLoader {
 	private boolean teleporting = false;
 	
 	public WorldLoader() {
-		CLTLog.info("recreating");
+		Log.info("reloading world");
 		mc = Minecraft.getMinecraft();
 		reloadWorld = true;
 	}
@@ -240,7 +239,7 @@ public class WorldLoader {
 				return;
 			}
 			reloadWorld(renderDistance, centerX, centerY, centerZ, shader);
-			CLTLog.info("reloading world #");
+			Log.info("reloading world #");
 			return;
 		}
 		
@@ -360,7 +359,8 @@ public class WorldLoader {
 					boolean fullBlock = state.isFullBlock();
 					boolean cube = state.isFullCube();
 					if (fullBlock != cube) {
-						Log.info(state.getBlock().getUnlocalizedName() + ": " + fullBlock);
+						//TODO
+						//Log.info(state.getBlock().getUnlocalizedName() + ": " + fullBlock);
 					}
 					if (fullBlock) {
 						stateSet.add(state);

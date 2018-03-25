@@ -1,4 +1,4 @@
-package mod.id107.raytracer.coretransform.classtransformers;
+package core.id107.raytracer.coretransform.classtransformers;
 
 import org.objectweb.asm.tree.AbstractInsnNode;
 import org.objectweb.asm.tree.ClassNode;
@@ -8,12 +8,12 @@ import org.objectweb.asm.tree.MethodInsnNode;
 import org.objectweb.asm.tree.MethodNode;
 import org.objectweb.asm.tree.VarInsnNode;
 
-import mod.id107.raytracer.coretransform.CLTLog;
-import mod.id107.raytracer.coretransform.CoreLoader;
-import mod.id107.raytracer.coretransform.TransformerUtil;
-import mod.id107.raytracer.coretransform.classtransformers.name.ClassName;
-import mod.id107.raytracer.coretransform.classtransformers.name.MethodName;
-import mod.id107.raytracer.coretransform.classtransformers.name.Names;
+import core.id107.raytracer.coretransform.CLTLog;
+import core.id107.raytracer.coretransform.CoreLoader;
+import core.id107.raytracer.coretransform.TransformerUtil;
+import core.id107.raytracer.coretransform.classtransformers.name.ClassName;
+import core.id107.raytracer.coretransform.classtransformers.name.MethodName;
+import core.id107.raytracer.coretransform.classtransformers.name.Names;
 
 import static org.objectweb.asm.Opcodes.*;
 

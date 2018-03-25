@@ -1,6 +1,6 @@
-package mod.id107.raytracer.coretransform.classtransformers.name;
+package core.id107.raytracer.coretransform.classtransformers.name;
 
-import mod.id107.raytracer.coretransform.CoreLoader;
+import core.id107.raytracer.coretransform.CoreLoader;
 
 public class FieldName {
 

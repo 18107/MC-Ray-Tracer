@@ -1,4 +1,4 @@
-package mod.id107.raytracer.coretransform.classtransformers;
+package core.id107.raytracer.coretransform.classtransformers;
 
 import org.objectweb.asm.tree.ClassNode;
 import org.objectweb.asm.tree.FieldInsnNode;
@@ -7,14 +7,16 @@ import org.objectweb.asm.tree.InsnNode;
 import org.objectweb.asm.tree.JumpInsnNode;
 import org.objectweb.asm.tree.LabelNode;
 import org.objectweb.asm.tree.MethodNode;
+
+import core.id107.raytracer.coretransform.CLTLog;
+import core.id107.raytracer.coretransform.CoreLoader;
+import core.id107.raytracer.coretransform.classtransformers.name.ClassName;
+import core.id107.raytracer.coretransform.classtransformers.name.MethodName;
+import core.id107.raytracer.coretransform.classtransformers.name.Names;
+
 import org.objectweb.asm.Type;
 
 import mod.id107.raytracer.RenderUtil;
-import mod.id107.raytracer.coretransform.CLTLog;
-import mod.id107.raytracer.coretransform.CoreLoader;
-import mod.id107.raytracer.coretransform.classtransformers.name.ClassName;
-import mod.id107.raytracer.coretransform.classtransformers.name.MethodName;
-import mod.id107.raytracer.coretransform.classtransformers.name.Names;
 import net.minecraft.client.renderer.Tessellator;
 import net.minecraft.client.renderer.VertexBuffer;
 import net.minecraft.client.renderer.culling.ICamera;

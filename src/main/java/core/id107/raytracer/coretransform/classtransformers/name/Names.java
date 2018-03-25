@@ -1,4 +1,4 @@
-package mod.id107.raytracer.coretransform.classtransformers.name;
+package core.id107.raytracer.coretransform.classtransformers.name;
 
 public class Names {
 
@@ -14,10 +14,6 @@ public class Names {
 	public static final ClassName GuiButton = new ClassName("net.minecraft.client.gui.GuiButton", "bfk");
 	
 	public static final FieldName GuiScreen_buttonList = new FieldName("buttonList", "field_146292_n", "n", "Lnet.minecraft.client.gui.GuiScreen;", "Lbhm;");
-	
-	public static final ClassName GuiOptions = new ClassName("net.minecraft.client.gui.GuiOptions", "bhg");
-	public static final MethodName GuiOptions_initGui = new MethodName("initGui", "func_73866_w_", "b", "()V", "()V");
-	public static final MethodName GuiOptions_actionPerformed = new MethodName("actionPerformed", "func_146284_a", "a", "(Lnet/minecraft/client/gui/GuiButton;)V", "(Lbfk;)V");
 	
 	public static final ClassName Minecraft = new ClassName("net.minecraft.client.Minecraft", "beq");
 	public static final MethodName Minecraft_loadWorld = new MethodName("loadWorld", "func_71353_a", "a", "(Lnet/minecraft/client/multiplayer/WorldClient;Ljava/lang/String;)V", "(Lbno;Ljava/lang/String;)V");

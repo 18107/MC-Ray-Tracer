@@ -11,7 +11,6 @@ import org.objectweb.asm.tree.MethodNode;
 import org.objectweb.asm.tree.VarInsnNode;
 
 import core.id107.raytracer.coretransform.CLTLog;
-import core.id107.raytracer.coretransform.CoreLoader;
 import core.id107.raytracer.coretransform.TransformerUtil;
 import core.id107.raytracer.coretransform.classtransformers.name.ClassName;
 import core.id107.raytracer.coretransform.classtransformers.name.MethodName;

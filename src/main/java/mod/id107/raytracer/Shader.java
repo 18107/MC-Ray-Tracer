@@ -1,7 +1,6 @@
 package mod.id107.raytracer;
 
 import java.nio.ByteBuffer;
-import java.nio.IntBuffer;
 
 import org.lwjgl.BufferUtils;
 import org.lwjgl.opengl.GL15;

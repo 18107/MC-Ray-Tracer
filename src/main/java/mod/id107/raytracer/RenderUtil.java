@@ -1,7 +1,6 @@
 package mod.id107.raytracer;
 
 import java.nio.IntBuffer;
-import java.util.Map;
 
 import org.lwjgl.BufferUtils;
 import org.lwjgl.input.Keyboard;
@@ -9,17 +8,12 @@ import org.lwjgl.opengl.Display;
 import org.lwjgl.opengl.GL11;
 import org.lwjgl.opengl.GL15;
 import org.lwjgl.opengl.GL20;
-import org.lwjgl.opengl.GL30;
-import org.lwjgl.opengl.GL43;
 
 import mod.id107.raytracer.gui.RayTracerSettings;
 import mod.id107.raytracer.world.WorldLoader;
 import net.minecraft.block.Block;
 import net.minecraft.client.Minecraft;
-import net.minecraft.client.shader.Framebuffer;
 import net.minecraft.entity.Entity;
-import net.minecraft.util.math.BlockPos;
-import net.minecraft.world.chunk.storage.ExtendedBlockStorage;
 
 public class RenderUtil {
 

@@ -2,24 +2,19 @@ package mod.id107.raytracer.world;
 
 import java.nio.IntBuffer;
 import java.util.ArrayDeque;
-import java.util.Deque;
 import java.util.HashSet;
-import java.util.Iterator;
 import java.util.Set;
 
 import org.lwjgl.BufferUtils;
 import org.lwjgl.opengl.GL15;
 import org.lwjgl.opengl.GL20;
-import org.lwjgl.opengl.GL30;
 import org.lwjgl.opengl.GL43;
 
 import mod.id107.raytracer.Log;
-import mod.id107.raytracer.RenderUtil;
 import mod.id107.raytracer.Shader;
 import net.minecraft.block.Block;
 import net.minecraft.block.state.IBlockState;
 import net.minecraft.client.Minecraft;
-import net.minecraft.client.multiplayer.WorldClient;
 import net.minecraft.util.ObjectIntIdentityMap;
 import net.minecraft.world.chunk.Chunk;
 import net.minecraft.world.chunk.storage.ExtendedBlockStorage;

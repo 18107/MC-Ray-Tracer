@@ -5,7 +5,7 @@ import java.io.InputStream;
 
 public class Reader {
 
-	public static String read(String resourceIn) {
+	public static String readShader(String resourceIn) {
 		InputStream is = Reader.class.getResourceAsStream(resourceIn);
 		if (is == null) {
 			Log.info("Shader not found");

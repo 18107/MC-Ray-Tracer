@@ -27,7 +27,7 @@ public class EventHandler {
 	@SubscribeEvent
 	public void chunkModified(RayTracerEvent.ChunkModifiedEvent e) {
 		if (RenderUtil.worldLoader != null) {
-			RenderUtil.worldLoader.updateChunkFirst(e.getChunk());
+			RenderUtil.worldLoader.onChunkModified(e.getChunk());
 		}
 	}
 	

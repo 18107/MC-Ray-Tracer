@@ -45,7 +45,7 @@ public class RenderGlobalTransformer extends ClassTransformer {
 			public void transform(ClassNode classNode, MethodNode method, boolean obfuscated) {
 				CLTLog.info("Found method: " + method.name + " " + method.desc);
 				
-				method.instructions.insert(skipMethod(RETURN, NOP));
+				//method.instructions.insert(skipMethod(RETURN, NOP)); FIXME renderManager.options==null, renderManager.cacheActiveRenderInfo(
 			}
 		};
 		

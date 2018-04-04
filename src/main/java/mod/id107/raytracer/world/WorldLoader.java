@@ -57,7 +57,8 @@ public class WorldLoader {
 	/**
 	 * TODO replace Chunk with ChunkCoord
 	 */
-	private ArrayDeque<Chunk> chunksModified = new ArrayDeque<Chunk>(24*24);
+	private ArrayDeque<Chunk> chunksModifiedFast = new ArrayDeque<Chunk>(24*24);
+	private ArrayDeque<Chunk> chunksModifiedSlow = new ArrayDeque<Chunk>(24*24);
 	
 	private int playerChunkX;
 	private int playerChunkY;
@@ -74,6 +75,20 @@ public class WorldLoader {
 		reloadWorld = true;
 	}
 	
+	public void onChunkModified(Chunk chunk) {
+		//Update the modified chunk
+		updateChunkFast(chunk);
+		//handle lighting updates in surrounding chunks
+		updateChunkSlow(chunk.xPosition+1, chunk.zPosition+1);
+		updateChunkSlow(chunk.xPosition+1, chunk.zPosition);
+		updateChunkSlow(chunk.xPosition+1, chunk.zPosition-1);
+		updateChunkSlow(chunk.xPosition, chunk.zPosition+1);
+		updateChunkSlow(chunk.xPosition, chunk.zPosition-1);
+		updateChunkSlow(chunk.xPosition-1, chunk.zPosition+1);
+		updateChunkSlow(chunk.xPosition-1, chunk.zPosition);
+		updateChunkSlow(chunk.xPosition-1, chunk.zPosition-1);
+	}
+	
 	/**
 	 * Gets a chunk from the chunk coordinates, then adds it
 	 * to the queue if it exists and is not already in the queue.
@@ -81,7 +96,7 @@ public class WorldLoader {
 	 * @param z chunk coordinate
 	 * @return if the chunk exists
 	 */
-	public boolean updateChunk(int x, int z) {
+	public boolean updateChunkSlow(int x, int z) {
 		Chunk chunk = mc.theWorld.getChunkFromChunkCoords(x, z);
 		ExtendedBlockStorage[] storage = chunk.getBlockStorageArray();
 		for (int y = 0; y < 16; y++) {
@@ -99,9 +114,9 @@ public class WorldLoader {
 	 * @return if the chunk was added to the queue
 	 */
 	public boolean updateChunk(Chunk chunk) {
-		synchronized (chunksModified) {
-			if (!chunksModified.contains(chunk)) {
-				chunksModified.add(chunk);
+		synchronized (chunksModifiedFast) {
+			if (!chunksModifiedSlow.contains(chunk) && !chunksModifiedFast.contains(chunk)) {
+				chunksModifiedSlow.add(chunk);
 				return true;
 			}
 			return false;
@@ -118,7 +133,7 @@ public class WorldLoader {
 		ExtendedBlockStorage[] storage = chunk.getBlockStorageArray();
 		for (int y = 0; y < 16; y++) {
 			if (storage[y] != null) {
-				updateChunkFirst(chunk);
+				updateChunkFast(chunk);
 				return true;
 			}
 		}
@@ -130,12 +145,12 @@ public class WorldLoader {
 	 * If the chunk is already in the queue, the duplicate is removed first.
 	 * @param chunk
 	 */
-	public void updateChunkFirst(Chunk chunk) {
-		synchronized (chunksModified) {
-			if (chunksModified.contains(chunk)) {
-				chunksModified.remove(chunk);
+	public void updateChunkFast(Chunk chunk) {
+		synchronized (chunksModifiedFast) {
+			if (chunksModifiedFast.contains(chunk)) {
+				chunksModifiedFast.remove(chunk);
 			}
-			chunksModified.push(chunk);
+			chunksModifiedFast.push(chunk);
 		}
 	}
 	
@@ -177,25 +192,26 @@ public class WorldLoader {
 		initializeWorld(renderDistance, centerX, centerY, centerZ, shader);
 
 		//upload the chunks in a spiral
-		synchronized (chunksModified) {
-			chunksModified.clear();
-			updateChunk(centerX, centerZ);
+		synchronized (chunksModifiedFast) {
+			chunksModifiedFast.clear();
+			chunksModifiedSlow.clear();
+			updateChunkSlow(centerX, centerZ);
 			for (int r = 1; r <= renderDistance-1; r++) {
 				for (int x = -r+1; x <= r; x++) {
 					int z = -r;
-					updateChunk(centerX+x, centerZ+z);
+					updateChunkSlow(centerX+x, centerZ+z);
 				}
 				for (int z = -r+1; z <= r; z++) {
 					int x = r;
-					updateChunk(centerX+x, centerZ+z);
+					updateChunkSlow(centerX+x, centerZ+z);
 				}
 				for (int x = r-1; x >= -r; x--) {
 					int z = r;
-					updateChunk(centerX+x, centerZ+z);
+					updateChunkSlow(centerX+x, centerZ+z);
 				}
 				for (int z = r-1; z >= -r; z--) {
 					int x = -r;
-					updateChunk(centerX+x, centerZ+z);
+					updateChunkSlow(centerX+x, centerZ+z);
 				}
 			}
 		}
@@ -252,9 +268,21 @@ public class WorldLoader {
 		}
 		
 		//handle block updates
-		synchronized (chunksModified) {
-			while (!chunksModified.isEmpty()) {
-				Chunk chunk = chunksModified.remove();
+		synchronized (chunksModifiedFast) {
+			while (!chunksModifiedFast.isEmpty()) {
+				Chunk chunk = chunksModifiedFast.remove();
+				int chunkX = chunk.xPosition - playerChunkX + renderDistance-1;
+				int chunkZ = chunk.zPosition - playerChunkZ + renderDistance-1;
+				int dimension = chunk.getWorld().provider.getDimension();
+				
+				if (chunkX < renderDistance*2-1 && chunkX >= 0 &&
+						chunkZ < renderDistance*2-1 && chunkZ >= 0 &&
+						dimension == this.dimension) {
+					reloadChunk(chunk, chunkX, chunkZ, renderDistance, shader);
+				}
+			}
+			for (int counter = chunksModifiedSlow.size()/16+1; counter>0 && !chunksModifiedSlow.isEmpty(); counter--) {
+				Chunk chunk = chunksModifiedSlow.remove();
 				int chunkX = chunk.xPosition - playerChunkX + renderDistance-1;
 				int chunkZ = chunk.zPosition - playerChunkZ + renderDistance-1;
 				int dimension = chunk.getWorld().provider.getDimension();

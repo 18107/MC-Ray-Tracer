@@ -64,7 +64,7 @@ public class Shader {
 		
 		//load voxels
 		FloatBuffer buffer = BufferUtils.createFloatBuffer(16*16*16*4);
-		byte[] data = Reader.readVoxel("/mod/id107/raytracer/voxel/error.mcvox");
+		byte[] data = Reader.readVoxel("/mod/id107/raytracer/voxel/frame.mcvox");
 		for (int i = 0; i < data.length; i++) {
 			buffer.put(((int)data[i]&0xFF)/255f);
 		}

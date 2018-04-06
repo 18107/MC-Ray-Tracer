@@ -108,41 +108,95 @@ vec3 getRaySphere(float fovx, float fovy, bool stereoscopic) {
 
 bool traceBlock(int id, vec3 nearestCube, vec3 inc, ivec3 iinc, ivec3 current, ivec3 last) {
   vec3 nearestVoxel;
+  vec3 vinc = inc/TEXTURE_RESOLUTION;
   ivec3 currentVoxel;
-  if (current.x != last.x) {
-    nearestVoxel.x = nearestCube.x - inc.x;
-    float distanceY = (nearestCube.y - nearestVoxel.x)/inc.y;
-    float distanceZ = (nearestCube.z - nearestVoxel.x)/inc.z;
-    color = vec4(0,distanceZ,0,1);
-    return true;
-  }
-  return false;
-}
+  ivec3 lastVoxel;
 
-//TODO remove
-/*bool traceBlock(int id, vec3 nearestCube, vec3 inc, ivec3 iinc, ivec3 current, ivec3 last) {
-  ivec3 distanceToEdge = ivec3(floor(nearestCube/inc*TEXTURE_RESOLUTION)); //TODO direction to edge
-  vec3 nearestVoxel = nearestCube - inc/TEXTURE_RESOLUTION*distanceToEdge;
+  //get current location
   if (current.x != last.x) {
-    nearestVoxel.x = nearestCube.x - inc.x*(TEXTURE_RESOLUTION-1)/TEXTURE_RESOLUTION;
-    distanceToEdge.x = TEXTURE_RESOLUTION-1;
-  }
-  else if (current.y != last.y) {
-    nearestVoxel.y = nearestCube.y - inc.y*(TEXTURE_RESOLUTION-1)/TEXTURE_RESOLUTION;
-    distanceToEdge.y = TEXTURE_RESOLUTION-1;
-  }
-  else { //if (current.z != last.z)
-    nearestVoxel.z = nearestCube.z - inc.z*(TEXTURE_RESOLUTION-1)/TEXTURE_RESOLUTION;
-    distanceToEdge.z = TEXTURE_RESOLUTION-1;
-  }
+    float plane = nearestCube.x - inc.x;
+    float distanceY = (nearestCube.y - plane)/inc.y;
+    float distanceZ = (nearestCube.z - plane)/inc.z;
+    currentVoxel.y = int(floor(TEXTURE_RESOLUTION*((iinc.y+1)/2) - distanceY*iinc.y*TEXTURE_RESOLUTION));
+    currentVoxel.z = int(floor(TEXTURE_RESOLUTION*((iinc.z+1)/2) - distanceZ*iinc.z*TEXTURE_RESOLUTION));
+    currentVoxel.x = (TEXTURE_RESOLUTION-1)*((-iinc.x+1)/2);
 
-  ivec3 currentVoxel = ivec3((TEXTURE_RESOLUTION-1)*((iinc+1)/2) - distanceToEdge*iinc);
+    nearestVoxel.x = plane + inc.x/TEXTURE_RESOLUTION;
+    nearestVoxel.y = nearestCube.y - inc.y*floor(distanceY*TEXTURE_RESOLUTION)/TEXTURE_RESOLUTION;
+    nearestVoxel.z = nearestCube.z - inc.z*floor(distanceZ*TEXTURE_RESOLUTION)/TEXTURE_RESOLUTION;
+    //TODO
+  }
+  else if (current.z != last.z) {
+    float plane = nearestCube.z - inc.z;
+    float distanceX = (nearestCube.x - plane)/inc.x;
+    float distanceY = (nearestCube.y - plane)/inc.y;
+    currentVoxel.x = int(floor(TEXTURE_RESOLUTION*((iinc.x+1)/2) - distanceX*iinc.x*TEXTURE_RESOLUTION));
+    currentVoxel.y = int(floor(TEXTURE_RESOLUTION*((iinc.y+1)/2) - distanceY*iinc.y*TEXTURE_RESOLUTION));
+    currentVoxel.z = (TEXTURE_RESOLUTION-1)*((-iinc.z+1)/2);
+
+    nearestVoxel.z = plane + inc.z/TEXTURE_RESOLUTION;
+    nearestVoxel.x = nearestCube.x - inc.x*floor(distanceX*TEXTURE_RESOLUTION)/TEXTURE_RESOLUTION;
+    nearestVoxel.y = nearestCube.y - inc.y*floor(distanceY*TEXTURE_RESOLUTION)/TEXTURE_RESOLUTION;
+  }
+  else { //if (current.y != last.y)
+    float plane = nearestCube.y - inc.y;
+    float distanceX = (nearestCube.x - plane)/inc.x;
+    float distanceZ = (nearestCube.z - plane)/inc.z;
+    currentVoxel.x = int(floor(TEXTURE_RESOLUTION*((iinc.x+1)/2) - distanceX*iinc.x*TEXTURE_RESOLUTION));
+    currentVoxel.z = int(floor(TEXTURE_RESOLUTION*((iinc.z+1)/2) - distanceZ*iinc.z*TEXTURE_RESOLUTION));
+    currentVoxel.y = (TEXTURE_RESOLUTION-1)*((-iinc.y+1)/2);
+
+    nearestVoxel.y = plane + inc.y/TEXTURE_RESOLUTION;
+    nearestVoxel.x = nearestCube.x - inc.x*floor(distanceX*TEXTURE_RESOLUTION)/TEXTURE_RESOLUTION;
+    nearestVoxel.z = nearestCube.z - inc.z*floor(distanceZ*TEXTURE_RESOLUTION)/TEXTURE_RESOLUTION;
+  }
 
   //TODO id*TEXTURE_RESOLUTION*TEXTURE_RESOLUTION*TEXTURE_RESOLUTION
   color = voxelColor[currentVoxel.z*TEXTURE_RESOLUTION*TEXTURE_RESOLUTION + currentVoxel.y*TEXTURE_RESOLUTION + currentVoxel.x];
-  color = vec4(0,mod(distanceToEdge.z/16.0,1.0),0,1);
-  return true; //TODO
-}*/
+  if (color.a != 0) {
+    return true;
+  }
+
+  lastVoxel = currentVoxel;
+
+  //trace voxel
+  while (true) { //TODO condition
+    if (nearestVoxel.x < nearestVoxel.y) {
+      if (nearestVoxel.x < nearestVoxel.z) {
+        nearestVoxel.x += vinc.x;
+        currentVoxel.x += iinc.x;
+        if (currentVoxel.x < 0 || currentVoxel.x >= TEXTURE_RESOLUTION) {
+          return false;
+        }
+      } else {
+        nearestVoxel.z += vinc.z;
+        currentVoxel.z += iinc.z;
+        if (currentVoxel.z < 0 || currentVoxel.z >= TEXTURE_RESOLUTION) {
+          return false;
+        }
+      }
+    } else {
+      if (nearestVoxel.y < nearestVoxel.z) {
+        nearestVoxel.y += vinc.y;
+        currentVoxel.y += iinc.y;
+        if (currentVoxel.y < 0 || currentVoxel.y >= TEXTURE_RESOLUTION) {
+          return false;
+        }
+      } else {
+        nearestVoxel.z += vinc.z;
+        currentVoxel.z += iinc.z;
+        if (currentVoxel.z < 0 || currentVoxel.z >= TEXTURE_RESOLUTION) {
+          return false;
+        }
+      }
+    }
+    //TODO id*TEXTURE_RESOLUTION*TEXTURE_RESOLUTION*TEXTURE_RESOLUTION
+    color = voxelColor[currentVoxel.z*TEXTURE_RESOLUTION*TEXTURE_RESOLUTION + currentVoxel.y*TEXTURE_RESOLUTION + currentVoxel.x];
+    if (color.a != 0) {
+      return true;
+    }
+  }
+}
 
 bool drawTexture(int id, int side, float xIn, float yIn, int light, int metadata) {
   float x = 12;

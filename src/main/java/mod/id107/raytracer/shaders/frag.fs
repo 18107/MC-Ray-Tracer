@@ -6,6 +6,8 @@
 
 #define WORLD_HEIGHT_CHUNKS 16
 
+#define TEXTURE_RESOLUTION 16
+
 in vec2 texcoord;
 
 uniform vec3 cameraPos;
@@ -22,21 +24,9 @@ uniform sampler2D tex;
 
 out vec4 color;
 
-struct TextureLocation {
-  int xPosition;
-  int yPosition;
-  int width;
-  int height;
-};
-
 struct BlockData {
   int id;
   int lightLevel;
-};
-
-layout(std430, binding = 1) buffer textureMap
-{
-  TextureLocation textureLocation[];
 };
 
 layout(std430, binding = 2) buffer worldChunks
@@ -59,25 +49,30 @@ layout(std430, binding = 5) buffer metadata
   int blockMetadata[];
 };
 
+layout(std430, binding = 6) buffer voxelData
+{
+  vec4 voxelColor[];
+};
+
 vec3 rotate(vec3 camera, vec3 ray) {
   //rotate z
   float x = cos(camera.z)*ray.x + sin(camera.z)*ray.y;
   float y = cos(camera.z)*ray.y - sin(camera.z)*ray.x;
   ray.x = x;
   ray.y = y;
-  
+
   //rotate x
   y = cos(camera.x)*ray.y - sin(camera.x)*ray.z;
   float z = cos(camera.x)*ray.z + sin(camera.x)*ray.y;
   ray.y = y;
   ray.z = z;
-  
+
   //rotate y
   x = cos(camera.y)*ray.x - sin(camera.y)*ray.z;
   z = cos(camera.y)*ray.z + sin(camera.y)*ray.x;
   ray.x = x;
   ray.z = z;
-  
+
   return ray;
 }
 
@@ -111,8 +106,46 @@ vec3 getRaySphere(float fovx, float fovy, bool stereoscopic) {
   return rotate(cameraDir, ray);
 }
 
+bool traceBlock(int id, vec3 nearestCube, vec3 inc, ivec3 iinc, ivec3 current, ivec3 last) {
+  vec3 nearestVoxel;
+  ivec3 currentVoxel;
+  if (current.x != last.x) {
+    nearestVoxel.x = nearestCube.x - inc.x;
+    float distanceY = (nearestCube.y - nearestVoxel.x)/inc.y;
+    float distanceZ = (nearestCube.z - nearestVoxel.x)/inc.z;
+    color = vec4(0,distanceZ,0,1);
+    return true;
+  }
+  return false;
+}
+
+//TODO remove
+/*bool traceBlock(int id, vec3 nearestCube, vec3 inc, ivec3 iinc, ivec3 current, ivec3 last) {
+  ivec3 distanceToEdge = ivec3(floor(nearestCube/inc*TEXTURE_RESOLUTION)); //TODO direction to edge
+  vec3 nearestVoxel = nearestCube - inc/TEXTURE_RESOLUTION*distanceToEdge;
+  if (current.x != last.x) {
+    nearestVoxel.x = nearestCube.x - inc.x*(TEXTURE_RESOLUTION-1)/TEXTURE_RESOLUTION;
+    distanceToEdge.x = TEXTURE_RESOLUTION-1;
+  }
+  else if (current.y != last.y) {
+    nearestVoxel.y = nearestCube.y - inc.y*(TEXTURE_RESOLUTION-1)/TEXTURE_RESOLUTION;
+    distanceToEdge.y = TEXTURE_RESOLUTION-1;
+  }
+  else { //if (current.z != last.z)
+    nearestVoxel.z = nearestCube.z - inc.z*(TEXTURE_RESOLUTION-1)/TEXTURE_RESOLUTION;
+    distanceToEdge.z = TEXTURE_RESOLUTION-1;
+  }
+
+  ivec3 currentVoxel = ivec3((TEXTURE_RESOLUTION-1)*((iinc+1)/2) - distanceToEdge*iinc);
+
+  //TODO id*TEXTURE_RESOLUTION*TEXTURE_RESOLUTION*TEXTURE_RESOLUTION
+  color = voxelColor[currentVoxel.z*TEXTURE_RESOLUTION*TEXTURE_RESOLUTION + currentVoxel.y*TEXTURE_RESOLUTION + currentVoxel.x];
+  color = vec4(0,mod(distanceToEdge.z/16.0,1.0),0,1);
+  return true; //TODO
+}*/
+
 bool drawTexture(int id, int side, float xIn, float yIn, int light, int metadata) {
-  float x = 13;
+  float x = 12;
   float y = 24;
   switch (id) {
   case 1: //stone
@@ -943,24 +976,24 @@ bool drawTexture(int id, int side, float xIn, float yIn, int light, int metadata
 }
 
 //returns true if successful
-bool skipChunk(inout ivec3 current, vec3 vector, inout ivec3 chunkPos, vec3 dir, vec3 pos, vec3 inc, ivec3 iinc, int worldWidth) {
+bool skipChunk(inout ivec3 current, vec3 nearestCube, inout ivec3 chunkPos, vec3 dir, vec3 pos, vec3 inc, ivec3 iinc, int worldWidth) {
   ivec3 jump = (iinc == 1 ? 16 - current : current + 1);
   vec3 jumpDist = (jump-1)*inc;
-  if (vector.x + jumpDist.x < vector.y + jumpDist.y) {
-    if (vector.x + jumpDist.x < vector.z + jumpDist.z) {
+  if (nearestCube.x + jumpDist.x < nearestCube.y + jumpDist.y) {
+    if (nearestCube.x + jumpDist.x < nearestCube.z + jumpDist.z) {
       chunkPos.x += iinc.x;
       if (chunkPos.x == worldWidth || chunkPos.x == -1) {
         return false;
       }
-      vector.x += jumpDist.x + inc.x;
+      nearestCube.x += jumpDist.x + inc.x;
       current.x += jump.x*iinc.x;
-      //TODO vector.yz, current.yz
+      //TODO nearestCube.yz, current.yz
       int temp = int(floor(dir.y*(current.x+16*(chunkPos.x-renderDistance)-pos.x)/dir.x + pos.y)) % 16;
       current.y += temp*iinc.y;
-      vector.y += temp*inc.y;
+      nearestCube.y += temp*inc.y;
       temp = int(floor(dir.z*(current.x+16*(chunkPos.x-renderDistance)-pos.x)/dir.x + pos.z)) % 16;
       current.z += temp*iinc.z;
-      vector.z += temp*inc.z;
+      nearestCube.z += temp*inc.z;
       return true;
     }
   }
@@ -968,7 +1001,7 @@ bool skipChunk(inout ivec3 current, vec3 vector, inout ivec3 chunkPos, vec3 dir,
 }
 //TODO chunkId
 
-void trace(inout ivec3 current, vec3 vector, vec3 dir, vec3 pos, ivec3 chunkPos, vec3 inc, ivec3 iinc, ivec3 offset) {
+void trace(inout ivec3 current, vec3 nearestCube, vec3 dir, vec3 pos, ivec3 chunkPos, vec3 inc, ivec3 iinc, ivec3 offset) {
   ivec3 last = ivec3(current.xyz);
   int worldWidth = renderDistance*2+1;
   int chunkId = location[chunkPos.z*worldWidth*16 + chunkPos.x*16 + chunkPos.y];
@@ -984,11 +1017,12 @@ void trace(inout ivec3 current, vec3 vector, vec3 dir, vec3 pos, ivec3 chunkPos,
     while (blockId == 0) {
       //TODO improve direction testing
       last = current;
-      
+      lastChunkId = chunkId;
+
       //Next cube
-      if (vector.x < vector.y) {
-        if (vector.x < vector.z) {
-            vector.x += inc.x;
+      if (nearestCube.x < nearestCube.y) {
+        if (nearestCube.x < nearestCube.z) {
+            nearestCube.x += inc.x;
             current.x += iinc.x;
             if ((current.x&16) == 16) {
               current.x &= 15;
@@ -997,11 +1031,10 @@ void trace(inout ivec3 current, vec3 vector, vec3 dir, vec3 pos, ivec3 chunkPos,
               if (chunkPos.x == worldWidth || chunkPos.x == -1) {
                 return;
               }
-              lastChunkId = chunkId;
               chunkId = location[chunkPos.z*worldWidth*WORLD_HEIGHT_CHUNKS + chunkPos.x*WORLD_HEIGHT_CHUNKS + chunkPos.y];
             }
         } else {
-            vector.z += inc.z;
+            nearestCube.z += inc.z;
             current.z += iinc.z;
             if ((current.z&16) == 16) {
               current.z &= 15;
@@ -1010,13 +1043,12 @@ void trace(inout ivec3 current, vec3 vector, vec3 dir, vec3 pos, ivec3 chunkPos,
               if (chunkPos.z == worldWidth || chunkPos.z == -1) {
                 return;
               }
-              lastChunkId = chunkId;
               chunkId = location[chunkPos.z*worldWidth*WORLD_HEIGHT_CHUNKS + chunkPos.x*WORLD_HEIGHT_CHUNKS + chunkPos.y];
             }
         }
       } else {
-        if (vector.y < vector.z) {
-            vector.y += inc.y;
+        if (nearestCube.y < nearestCube.z) {
+            nearestCube.y += inc.y;
             current.y += iinc.y;
             if ((current.y&16) == 16) {
               current.y &= 15;
@@ -1025,11 +1057,10 @@ void trace(inout ivec3 current, vec3 vector, vec3 dir, vec3 pos, ivec3 chunkPos,
               if (chunkPos.y == WORLD_HEIGHT_CHUNKS || chunkPos.y == -1) {
                 return;
               }
-              lastChunkId = chunkId;
               chunkId = location[chunkPos.z*worldWidth*WORLD_HEIGHT_CHUNKS + chunkPos.x*WORLD_HEIGHT_CHUNKS + chunkPos.y];
             }
         } else {
-            vector.z += inc.z;
+            nearestCube.z += inc.z;
             current.z += iinc.z;
             if ((current.z&16) == 16) {
               current.z &= 15;
@@ -1038,34 +1069,36 @@ void trace(inout ivec3 current, vec3 vector, vec3 dir, vec3 pos, ivec3 chunkPos,
               if (chunkPos.z == worldWidth || chunkPos.z == -1) {
                 return;
               }
-              lastChunkId = chunkId;
               chunkId = location[chunkPos.z*worldWidth*WORLD_HEIGHT_CHUNKS + chunkPos.x*WORLD_HEIGHT_CHUNKS + chunkPos.y];
             }
         }
       }
-      
+
       //skip empty chunks
       //if (chunkId == 0) {
-        //bool success = skipChunk(current, vector, chunkPos, dir, pos, inc, iinc, worldWidth);
+        //bool success = skipChunk(current, nearestCube, chunkPos, dir, pos, inc, iinc, worldWidth);
         //if (!success) {
           //return;
         //}
       //}
-      
+
       if (chunkId != 0) {
         blockId = blockData[(chunkId-1)*CHUNK_SIZE + (current.y<<8) + (current.z<<4) + current.x].id;
       }
-      
+
     } //else if (block != air)
-    
-    int light = blockData[(lastChunkId-1)*CHUNK_SIZE + ((last.y%16)<<8) + ((last.z%16)<<4) + (last.x%16)].lightLevel;
+
+    int light = 15;
+    if (lastChunkId != 0) {
+      light = blockData[(lastChunkId-1)*CHUNK_SIZE + ((last.y%16)<<8) + ((last.z%16)<<4) + (last.x%16)].lightLevel;
+    }
     int metadataId = metaLocation[chunkPos.z*worldWidth*WORLD_HEIGHT_CHUNKS + chunkPos.x*WORLD_HEIGHT_CHUNKS + chunkPos.y];
     int metadata = 0;
-    
+
     if (metadataId != 0) {
       metadata = blockMetadata[(metadataId-1)*CHUNK_SIZE + (current.y<<8) + (current.z<<4) + current.x];
     }
-    
+
     chunkPos += offset; //TODO understand what this does
     if (current.x != last.x) {
       float distanceX = current.x+16*(chunkPos.x-renderDistance)-pos.x;
@@ -1102,7 +1135,11 @@ void trace(inout ivec3 current, vec3 vector, vec3 dir, vec3 pos, ivec3 chunkPos,
       }
     }
     chunkPos -= offset;
-    blockFound = drawTexture(blockId, side, texX, texY, light, metadata);
+    if (blockId == 5) {
+      blockFound = traceBlock(blockId, nearestCube, inc, iinc, current, last);
+    } else {
+      blockFound = drawTexture(blockId, side, texX, texY, light, metadata);
+    }
   }
 }
 
@@ -1115,7 +1152,7 @@ void main(void) {
   }
   vec3 point = vec3(cameraPos);
   ivec3 chunkPos = ivec3(renderDistance, chunkHeight, renderDistance);
-  
+
   ivec3 offset = ivec3(0, 0, 0);
   //3D
   if (stereoscopic3d) {
@@ -1154,11 +1191,11 @@ void main(void) {
       offset.z = -1;
     }
   }
-  
+
   ivec3 current = ivec3(floor(point))%16;
-  
-  //nearest cube (not really a vector)
-  vec3 vector;
+
+  //number of steps to the next cube
+  vec3 nearestCube;
   {
     //temp variable
     ivec3 nextDir;
@@ -1177,11 +1214,12 @@ void main(void) {
     } else {
         nextDir.z = int(floor(point.z));
     }
-    
-    vector = abs((nextDir - point)/dir);
+
+    nearestCube = abs((nextDir - point)/dir);
   }
+  //number of steps across a cube
   vec3 inc = abs(1/dir);
-  
+
   //Allows for incrementing/decrementing without calculating which one every time.
   ivec3 iinc;
   if (dir.x > 0) {
@@ -1199,6 +1237,6 @@ void main(void) {
   } else {
       iinc.z = -1;
   }
-  
-  trace(current, vector, dir, mod(point, 16), chunkPos, inc, iinc, offset);
+
+  trace(current, nearestCube, dir, mod(point, 16), chunkPos, inc, iinc, offset);
 }

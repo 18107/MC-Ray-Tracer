@@ -33,7 +33,7 @@ public class MinecraftTransformer extends ClassTransformer {
 			
 			public void transform(ClassNode classNode, MethodNode method, boolean obfuscated) {
 				CLTLog.info("Found method: " + method.name + " " + method.desc);
-				CLTLog.info("begining at start of method " + getMethodName());
+				CLTLog.info("begining at start of method " + getMethodName().debug());
 				
 				//TransformerUtil.onWorldLoad(WorldClient worldClientIn)
 				InsnList toInsert = new InsnList();

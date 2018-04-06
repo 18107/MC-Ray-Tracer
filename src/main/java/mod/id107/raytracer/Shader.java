@@ -1,6 +1,7 @@
 package mod.id107.raytracer;
 
 import java.nio.ByteBuffer;
+import java.nio.FloatBuffer;
 
 import org.lwjgl.BufferUtils;
 import org.lwjgl.opengl.GL15;
@@ -18,6 +19,7 @@ public class Shader {
 	private int chunkSsbo;
 	private int worldMetadataSsbo;
 	private int metadataSsbo;
+	private int voxelDataSsbo;
 	
 	public void createShaderProgram() {
 		shaderProgram = GL20.glCreateProgram();
@@ -60,10 +62,19 @@ public class Shader {
 		GL15.glBufferData(GL15.GL_ARRAY_BUFFER, bb, GL15.GL_STATIC_DRAW);
 		GL15.glBindBuffer(GL15.GL_ARRAY_BUFFER, 0);
 		
+		//load voxels
+		FloatBuffer buffer = BufferUtils.createFloatBuffer(16*16*16*4);
+		byte[] data = Reader.readVoxel("/mod/id107/raytracer/voxel/error.mcvox");
+		for (int i = 0; i < data.length; i++) {
+			buffer.put(((int)data[i]&0xFF)/255f);
+		}
+		buffer.flip();
+		
 		worldChunkSsbo = GL15.glGenBuffers();
 		chunkSsbo = GL15.glGenBuffers();
 		worldMetadataSsbo = GL15.glGenBuffers();
 		metadataSsbo = GL15.glGenBuffers();
+		voxelDataSsbo = GL15.glGenBuffers();
 		
 		GL15.glBindBuffer(GL43.GL_SHADER_STORAGE_BUFFER, worldChunkSsbo);
 		GL15.glBufferData(GL43.GL_SHADER_STORAGE_BUFFER, 0, GL15.GL_DYNAMIC_DRAW);
@@ -80,6 +91,10 @@ public class Shader {
 		GL15.glBindBuffer(GL43.GL_SHADER_STORAGE_BUFFER, metadataSsbo);
 		GL15.glBufferData(GL43.GL_SHADER_STORAGE_BUFFER, 0, GL15.GL_DYNAMIC_DRAW);
 		GL30.glBindBufferBase(GL43.GL_SHADER_STORAGE_BUFFER, 5, metadataSsbo);
+		
+		GL15.glBindBuffer(GL43.GL_SHADER_STORAGE_BUFFER, voxelDataSsbo);
+		GL15.glBufferData(GL43.GL_SHADER_STORAGE_BUFFER, buffer, GL15.GL_STATIC_DRAW);
+		GL30.glBindBufferBase(GL43.GL_SHADER_STORAGE_BUFFER, 6, voxelDataSsbo);
 		GL15.glBindBuffer(GL43.GL_SHADER_STORAGE_BUFFER, 0);
 	}
 	
@@ -105,6 +120,12 @@ public class Shader {
 		worldChunkSsbo = 0;
 		GL15.glDeleteBuffers(chunkSsbo);
 		chunkSsbo = 0;
+		GL15.glDeleteBuffers(worldMetadataSsbo);
+		worldMetadataSsbo = 0;
+		GL15.glDeleteBuffers(metadataSsbo);
+		metadataSsbo = 0;
+		GL15.glDeleteBuffers(voxelDataSsbo);
+		voxelDataSsbo = 0;
 		GL20.glDeleteProgram(shaderProgram);
 		shaderProgram = 0;
 	}
@@ -131,5 +152,9 @@ public class Shader {
 	
 	public int getMetadataSsbo() {
 		return metadataSsbo;
+	}
+	
+	public int getVoxelDataSsbo() {
+		return voxelDataSsbo;
 	}
 }

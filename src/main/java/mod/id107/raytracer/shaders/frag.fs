@@ -8,6 +8,15 @@
 
 #define TEXTURE_RESOLUTION 16
 
+const mat4 rotation[6] = mat4[](
+  mat4(0,0,1,0, 0,1,0,0, -1,0,0,0, 1,0,0,1),
+  mat4(0,0,-1,0, 0,1,0,0, 1,0,0,0, 0,0,1,1),
+  mat4(1,0,0,0, 0,1,0,0, 0,0,1,0, 0,0,0,1), //TODO
+  mat4(1,0,0,0, 0,1,0,0, 0,0,1,0, 0,0,0,1), //TODO
+  mat4(1,0,0,0, 0,1,0,0, 0,0,1,0, 0,0,0,1),
+  mat4(-1,0,0,0, 0,1,0,0, 0,0,-1,0, 1,0,1,1)
+);
+
 in vec2 texcoord;
 
 uniform vec3 cameraPos;
@@ -106,60 +115,8 @@ vec3 getRaySphere(float fovx, float fovy, bool stereoscopic) {
   return rotate(cameraDir, ray);
 }
 
-bool traceBlock(int id, vec3 nearestCube, vec3 inc, ivec3 iinc, ivec3 current, ivec3 last) {
-  vec3 nearestVoxel;
-  vec3 vinc = inc/TEXTURE_RESOLUTION;
-  ivec3 currentVoxel;
-  ivec3 lastVoxel;
-
-  //get current location
-  if (current.x != last.x) {
-    float plane = nearestCube.x - inc.x;
-    float distanceY = (nearestCube.y - plane)/inc.y;
-    float distanceZ = (nearestCube.z - plane)/inc.z;
-    currentVoxel.y = int(floor(TEXTURE_RESOLUTION*((iinc.y+1)/2) - distanceY*iinc.y*TEXTURE_RESOLUTION));
-    currentVoxel.z = int(floor(TEXTURE_RESOLUTION*((iinc.z+1)/2) - distanceZ*iinc.z*TEXTURE_RESOLUTION));
-    currentVoxel.x = (TEXTURE_RESOLUTION-1)*((-iinc.x+1)/2);
-
-    nearestVoxel.x = plane + inc.x/TEXTURE_RESOLUTION;
-    nearestVoxel.y = nearestCube.y - inc.y*floor(distanceY*TEXTURE_RESOLUTION)/TEXTURE_RESOLUTION;
-    nearestVoxel.z = nearestCube.z - inc.z*floor(distanceZ*TEXTURE_RESOLUTION)/TEXTURE_RESOLUTION;
-    //TODO
-  }
-  else if (current.z != last.z) {
-    float plane = nearestCube.z - inc.z;
-    float distanceX = (nearestCube.x - plane)/inc.x;
-    float distanceY = (nearestCube.y - plane)/inc.y;
-    currentVoxel.x = int(floor(TEXTURE_RESOLUTION*((iinc.x+1)/2) - distanceX*iinc.x*TEXTURE_RESOLUTION));
-    currentVoxel.y = int(floor(TEXTURE_RESOLUTION*((iinc.y+1)/2) - distanceY*iinc.y*TEXTURE_RESOLUTION));
-    currentVoxel.z = (TEXTURE_RESOLUTION-1)*((-iinc.z+1)/2);
-
-    nearestVoxel.z = plane + inc.z/TEXTURE_RESOLUTION;
-    nearestVoxel.x = nearestCube.x - inc.x*floor(distanceX*TEXTURE_RESOLUTION)/TEXTURE_RESOLUTION;
-    nearestVoxel.y = nearestCube.y - inc.y*floor(distanceY*TEXTURE_RESOLUTION)/TEXTURE_RESOLUTION;
-  }
-  else { //if (current.y != last.y)
-    float plane = nearestCube.y - inc.y;
-    float distanceX = (nearestCube.x - plane)/inc.x;
-    float distanceZ = (nearestCube.z - plane)/inc.z;
-    currentVoxel.x = int(floor(TEXTURE_RESOLUTION*((iinc.x+1)/2) - distanceX*iinc.x*TEXTURE_RESOLUTION));
-    currentVoxel.z = int(floor(TEXTURE_RESOLUTION*((iinc.z+1)/2) - distanceZ*iinc.z*TEXTURE_RESOLUTION));
-    currentVoxel.y = (TEXTURE_RESOLUTION-1)*((-iinc.y+1)/2);
-
-    nearestVoxel.y = plane + inc.y/TEXTURE_RESOLUTION;
-    nearestVoxel.x = nearestCube.x - inc.x*floor(distanceX*TEXTURE_RESOLUTION)/TEXTURE_RESOLUTION;
-    nearestVoxel.z = nearestCube.z - inc.z*floor(distanceZ*TEXTURE_RESOLUTION)/TEXTURE_RESOLUTION;
-  }
-
-  //TODO id*TEXTURE_RESOLUTION*TEXTURE_RESOLUTION*TEXTURE_RESOLUTION
-  color = voxelColor[currentVoxel.z*TEXTURE_RESOLUTION*TEXTURE_RESOLUTION + currentVoxel.y*TEXTURE_RESOLUTION + currentVoxel.x];
-  if (color.a != 0) {
-    return true;
-  }
-
-  lastVoxel = currentVoxel;
-
-  //trace voxel
+bool traceBlock(int id, vec3 nearestVoxel, ivec4 currentVoxel, mat4 rotate, vec3 vinc, ivec3 iinc) {
+  ivec4 rotated;
   while (true) { //TODO condition
     if (nearestVoxel.x < nearestVoxel.y) {
       if (nearestVoxel.x < nearestVoxel.z) {
@@ -190,19 +147,101 @@ bool traceBlock(int id, vec3 nearestCube, vec3 inc, ivec3 iinc, ivec3 current, i
         }
       }
     }
-    //TODO id*TEXTURE_RESOLUTION*TEXTURE_RESOLUTION*TEXTURE_RESOLUTION
-    color = voxelColor[currentVoxel.z*TEXTURE_RESOLUTION*TEXTURE_RESOLUTION + currentVoxel.y*TEXTURE_RESOLUTION + currentVoxel.x];
+    rotated = ivec4(rotate*currentVoxel);
+    color = voxelColor[id*TEXTURE_RESOLUTION*TEXTURE_RESOLUTION*TEXTURE_RESOLUTION +
+        rotated.z*TEXTURE_RESOLUTION*TEXTURE_RESOLUTION +
+        rotated.y*TEXTURE_RESOLUTION + rotated.x];
     if (color.a != 0) {
       return true;
     }
   }
 }
 
-bool drawTexture(int id, int side, float xIn, float yIn, int light, int metadata) {
+bool setupTraceFirstBlock() { //TODO
+  return false;
+  //ivec4 currentVoxel = ivec4(floor(mod(pos,1)),1);
+}
+
+bool setupTraceBlock(int id, vec3 nearestCube, vec3 inc, ivec3 iinc, ivec3 current, ivec3 last, mat4 rotate, bool rotateAll) {
+  vec3 nearestVoxel;
+  ivec4 currentVoxel;
+  ivec4 rotated;
+
+  //get current location
+  if (current.x != last.x) {
+    float plane = nearestCube.x - inc.x;
+    float distanceY = (nearestCube.y - plane)/inc.y;
+    float distanceZ = (nearestCube.z - plane)/inc.z;
+    currentVoxel.y = int(floor(TEXTURE_RESOLUTION*((iinc.y+1)/2) - distanceY*iinc.y*TEXTURE_RESOLUTION));
+    currentVoxel.z = int(floor(TEXTURE_RESOLUTION*((iinc.z+1)/2) - distanceZ*iinc.z*TEXTURE_RESOLUTION));
+    currentVoxel.x = (TEXTURE_RESOLUTION-1)*((-iinc.x+1)/2);
+    currentVoxel.w = (TEXTURE_RESOLUTION-1);
+
+    nearestVoxel.x = plane + inc.x/TEXTURE_RESOLUTION;
+    nearestVoxel.y = nearestCube.y - inc.y*floor(distanceY*TEXTURE_RESOLUTION)/TEXTURE_RESOLUTION;
+    nearestVoxel.z = nearestCube.z - inc.z*floor(distanceZ*TEXTURE_RESOLUTION)/TEXTURE_RESOLUTION;
+
+    if (rotateAll) {
+      if (current.x < last.x) {
+        rotate = mat4(0,0,1,0, 0,1,0,0, -1,0,0,0, 1,0,0,1);
+      } else {
+        rotate = mat4(0,0,-1,0, 0,1,0,0, 1,0,0,0, 0,0,1,1);
+      }
+    }
+  }
+  else if (current.z != last.z) {
+    float plane = nearestCube.z - inc.z;
+    float distanceX = (nearestCube.x - plane)/inc.x;
+    float distanceY = (nearestCube.y - plane)/inc.y;
+    currentVoxel.x = int(floor(TEXTURE_RESOLUTION*((iinc.x+1)/2) - distanceX*iinc.x*TEXTURE_RESOLUTION));
+    currentVoxel.y = int(floor(TEXTURE_RESOLUTION*((iinc.y+1)/2) - distanceY*iinc.y*TEXTURE_RESOLUTION));
+    currentVoxel.z = (TEXTURE_RESOLUTION-1)*((-iinc.z+1)/2);
+    currentVoxel.w = (TEXTURE_RESOLUTION-1);
+
+    nearestVoxel.z = plane + inc.z/TEXTURE_RESOLUTION;
+    nearestVoxel.x = nearestCube.x - inc.x*floor(distanceX*TEXTURE_RESOLUTION)/TEXTURE_RESOLUTION;
+    nearestVoxel.y = nearestCube.y - inc.y*floor(distanceY*TEXTURE_RESOLUTION)/TEXTURE_RESOLUTION;
+
+    if (rotateAll) {
+      if (current.z > last.z) {
+        rotate = mat4(-1,0,0,0, 0,1,0,0, 0,0,-1,0, 1,0,1,1);
+      }
+    }
+  }
+  else { //if (current.y != last.y)
+    float plane = nearestCube.y - inc.y;
+    float distanceX = (nearestCube.x - plane)/inc.x;
+    float distanceZ = (nearestCube.z - plane)/inc.z;
+    currentVoxel.x = int(floor(TEXTURE_RESOLUTION*((iinc.x+1)/2) - distanceX*iinc.x*TEXTURE_RESOLUTION));
+    currentVoxel.z = int(floor(TEXTURE_RESOLUTION*((iinc.z+1)/2) - distanceZ*iinc.z*TEXTURE_RESOLUTION));
+    currentVoxel.y = (TEXTURE_RESOLUTION-1)*((-iinc.y+1)/2);
+    currentVoxel.w = (TEXTURE_RESOLUTION-1);
+
+    nearestVoxel.y = plane + inc.y/TEXTURE_RESOLUTION;
+    nearestVoxel.x = nearestCube.x - inc.x*floor(distanceX*TEXTURE_RESOLUTION)/TEXTURE_RESOLUTION;
+    nearestVoxel.z = nearestCube.z - inc.z*floor(distanceZ*TEXTURE_RESOLUTION)/TEXTURE_RESOLUTION;
+  }
+
+  rotated = ivec4(rotate*currentVoxel);
+
+  color = voxelColor[id*TEXTURE_RESOLUTION*TEXTURE_RESOLUTION*TEXTURE_RESOLUTION +
+      rotated.z*TEXTURE_RESOLUTION*TEXTURE_RESOLUTION +
+      rotated.y*TEXTURE_RESOLUTION + rotated.x];
+  if (color.a != 0) {
+    return true;
+  }
+
+  //trace voxel
+  return traceBlock(id, nearestVoxel, currentVoxel, rotate, inc/TEXTURE_RESOLUTION, iinc);
+}
+
+bool drawTexture(int id, int side, float xIn, float yIn, int light, int metadata,
+  vec3 nearestCube, vec3 inc, ivec3 iinc, ivec3 current, ivec3 last, ivec3 chunkPos) {
   float x = 12;
   float y = 24;
   switch (id) {
   case 1: //stone
+    //return setupTraceBlock(3, nearestCube, inc, iinc, current, last, mat3(1,0,0, 0,1,0, 0,0,1), ivec3(0,0,0), false); //TODO
     x = 24;
     switch (metadata) {
     case 0: //stone
@@ -725,8 +764,9 @@ bool drawTexture(int id, int side, float xIn, float yIn, int light, int metadata
       x = 18;
       y = 3;
     } else {
-      x = 6;
-      y = 2;
+      return setupTraceBlock(2, nearestCube, inc, iinc, current, last, mat4(1,0,0,0, 0,1,0,0, 0,0,1,0, 0,0,0,1), true);
+      /*x = 6;
+      y = 2;*/
     }
     break;
   case 48: //mossy_cobblestone
@@ -750,22 +790,7 @@ bool drawTexture(int id, int side, float xIn, float yIn, int light, int metadata
     y = 4;
     break;
   case 58: //crafting_table
-    if (side == 0) {
-      x = 18;
-      y = 3;
-    }
-    else if (side == 1) {
-      x = 8;
-      y = 5;
-    }
-    else if ((side&1) == 1) {
-      x = 8;
-      y = 4;
-    } else {
-      x = 8;
-      y = 3;
-    }
-    break;
+    return setupTraceBlock(1, nearestCube, inc, iinc, current, last, mat4(1,0,0,0, 0,1,0,0, 0,0,1,0, 0,0,0,1), false);
   case 61: //furnace
     y = 9;
     if (side < 2) {
@@ -788,6 +813,88 @@ bool drawTexture(int id, int side, float xIn, float yIn, int light, int metadata
       x = 11;
     }
     break;
+  case 64: //door
+    int md0;
+    int md1;
+    int id;
+    mat4 rot = rotation[4];
+    if ((metadata & 8) == 0) {
+      md0 = metadata;
+      id = 4;
+      if (current.y != CHUNK_SIZE-1) {
+        int metadataId = metaLocation[chunkPos.z*(renderDistance*2+1)*WORLD_HEIGHT_CHUNKS + chunkPos.x*WORLD_HEIGHT_CHUNKS + chunkPos.y];
+        md1 = blockMetadata[(metadataId-1)*CHUNK_SIZE + ((current.y+1)<<8) + (current.z<<4) + current.x];
+      } else {
+        int metadataId = metaLocation[chunkPos.z*(renderDistance*2+1)*WORLD_HEIGHT_CHUNKS + chunkPos.x*WORLD_HEIGHT_CHUNKS + chunkPos.y+1];
+        md1 = blockMetadata[(metadataId-1)*CHUNK_SIZE + (current.z<<4) + current.x];
+      }
+    } else {
+      md1 = metadata;
+      id = 5;
+      if (current.y != 0) {
+        int metadataId = metaLocation[chunkPos.z*(renderDistance*2+1)*WORLD_HEIGHT_CHUNKS + chunkPos.x*WORLD_HEIGHT_CHUNKS + chunkPos.y];
+        md0 = blockMetadata[(metadataId-1)*CHUNK_SIZE + ((current.y-1)<<8) + (current.z<<4) + current.x];
+      } else {
+        int metadataId = metaLocation[chunkPos.z*(renderDistance*2+1)*WORLD_HEIGHT_CHUNKS + chunkPos.x*WORLD_HEIGHT_CHUNKS + chunkPos.y-1];
+        md0 = blockMetadata[(metadataId-1)*CHUNK_SIZE + ((CHUNK_SIZE-1)<<8) + (current.z<<4) + current.x];
+      }
+    }
+    if ((md0 & 4) != 0) {
+      rot = mat4(0,0,-1,0, 0,1,0,0, -1,0,0,0, 1,0,1,1)*rot;
+    }
+    //discovered through trial and error at 1am. TODO fix this mess
+    switch ((md0 & 7) | ((md1 & 1)<<3)) {
+      case 0:
+      case 13:
+        rot = rotation[1]; //east
+        break;
+      case 1:
+      case 14:
+        rot = rotation[5]; //south
+        break;
+      case 2:
+      case 15:
+        rot = rotation[0]; //west
+        break;
+      case 3:
+      case 12:
+        rot = rotation[4]; //north
+        break;
+      case 8:
+      case 7:
+        rot = mat4(0,0,-1,0, 0,1,0,0, -1,0,0,0, 1,0,1,1);
+        break;
+      case 11:
+      case 6:
+        rot = mat4(-1,0,0,0, 0,1,0,0, 0,0,1,0, 1,0,0,1);
+        break;
+      case 10:
+      case 5:
+        rot = mat4(0,0,1,0, 0,1,0,0, 1,0,0,0, 0,0,0,1);
+        break;
+      case 9:
+      case 4:
+        rot = mat4(1,0,0,0, 0,1,0,0, 0,0,-1,0, 0,0,1,1);
+        break;
+    }
+    return setupTraceBlock(id, nearestCube, inc, iinc, current, last, rot, false);
+  case 65: //ladder
+    mat4 matrix;
+    switch (metadata) {
+    case 2:
+      matrix = rotation[5];
+      break;
+    case 4:
+      matrix = rotation[1];
+      break;
+    case 5:
+      matrix = rotation[0];
+      break;
+    default:
+      matrix = rotation[4];
+      break;
+    }
+    return setupTraceBlock(3, nearestCube, inc, iinc, current, last, matrix, false);
   case 73: //redstone_ore
   case 74: //lit_redstone_ore
     x = 21;
@@ -1018,8 +1125,7 @@ bool drawTexture(int id, int side, float xIn, float yIn, int light, int metadata
     break;
     */
   default:
-    break;
-    //return false;
+    return setupTraceBlock(0, nearestCube, inc, iinc, current, last, rotation[4], false);
   }
   //TODO do sunlight
   color = texture(tex, vec2((x + xIn)/32, (y + yIn)/32))/* * vec4((light+1)/16.0, (light+1)/16.0, (light+1)/16.0, 1)*/;
@@ -1055,145 +1161,161 @@ bool skipChunk(inout ivec3 current, vec3 nearestCube, inout ivec3 chunkPos, vec3
 }
 //TODO chunkId
 
-void trace(inout ivec3 current, vec3 nearestCube, vec3 dir, vec3 pos, ivec3 chunkPos, vec3 inc, ivec3 iinc, ivec3 offset) {
-  ivec3 last = ivec3(current.xyz);
-  int worldWidth = renderDistance*2+1;
-  int chunkId = location[chunkPos.z*worldWidth*16 + chunkPos.x*16 + chunkPos.y];
-  //TODO if player is above the world
-  int lastChunkId; //used for light levels
-  int blockId = 0;
-  bool blockFound = false;
+int nextCube(inout vec3 nearestCube, inout ivec3 current, inout ivec3 last, inout ivec3 chunkPos,
+  inout int chunkId, inout int lastChunkId, vec3 inc, ivec3 iinc, int worldWidth) {
+  //TODO improve direction testing
+  last = current;
+  lastChunkId = chunkId;
+
+  if (nearestCube.x < nearestCube.y) {
+    if (nearestCube.x < nearestCube.z) {
+      nearestCube.x += inc.x;
+      current.x += iinc.x;
+      if ((current.x&16) == 16) {
+        current.x &= 15;
+        last.x = current.x - iinc.x;
+        chunkPos.x += iinc.x;
+        if (chunkPos.x == worldWidth || chunkPos.x == -1) {
+          discard;
+          return -1;
+        }
+        chunkId = location[chunkPos.z*worldWidth*WORLD_HEIGHT_CHUNKS + chunkPos.x*WORLD_HEIGHT_CHUNKS + chunkPos.y];
+      }
+    } else {
+      nearestCube.z += inc.z;
+      current.z += iinc.z;
+      if ((current.z&16) == 16) {
+        current.z &= 15;
+        last.z = current.z - iinc.z;
+        chunkPos.z += iinc.z;
+        if (chunkPos.z == worldWidth || chunkPos.z == -1) {
+          discard;
+          return -1;
+        }
+        chunkId = location[chunkPos.z*worldWidth*WORLD_HEIGHT_CHUNKS + chunkPos.x*WORLD_HEIGHT_CHUNKS + chunkPos.y];
+      }
+    }
+  } else {
+    if (nearestCube.y < nearestCube.z) {
+      nearestCube.y += inc.y;
+      current.y += iinc.y;
+      if ((current.y&16) == 16) {
+        current.y &= 15;
+        last.y = current.y - iinc.y;
+        chunkPos.y += iinc.y;
+        if (chunkPos.y == WORLD_HEIGHT_CHUNKS || chunkPos.y == -1) {
+          discard;
+          return -1;
+        }
+        chunkId = location[chunkPos.z*worldWidth*WORLD_HEIGHT_CHUNKS + chunkPos.x*WORLD_HEIGHT_CHUNKS + chunkPos.y];
+      }
+    } else {
+      nearestCube.z += inc.z;
+      current.z += iinc.z;
+      if ((current.z&16) == 16) {
+        current.z &= 15;
+        last.z = current.z - iinc.z;
+        chunkPos.z += iinc.z;
+        if (chunkPos.z == worldWidth || chunkPos.z == -1) {
+          discard;
+          return -1;
+        }
+        chunkId = location[chunkPos.z*worldWidth*WORLD_HEIGHT_CHUNKS + chunkPos.x*WORLD_HEIGHT_CHUNKS + chunkPos.y];
+      }
+    }
+  }
+
+  //TODO skip empty chunks
+  //if (chunkId == 0) {
+    //bool success = skipChunk(current, nearestCube, chunkPos, dir, pos, inc, iinc, worldWidth);
+    //if (!success) {
+      //return;
+    //}
+  //}
+
+  if (chunkId != 0) {
+    return blockData[(chunkId-1)*CHUNK_SIZE + (current.y<<8) + (current.z<<4) + current.x].id;
+  } else {
+    return 0;
+  }
+}
+
+//TODO make this redundant
+bool setupDrawBlock(int blockId, ivec3 current, ivec3 last, vec3 nearestCube, vec3 dir, vec3 pos,
+  vec3 inc, ivec3 iinc, ivec3 chunkPos, ivec3 offset, int lastChunkId, int worldWidth) {
   int side;
   float texX;
   float texY;
+  int light = 15;
+  if (lastChunkId != 0) {
+    light = blockData[(lastChunkId-1)*CHUNK_SIZE + ((last.y%16)<<8) + ((last.z%16)<<4) + (last.x%16)].lightLevel;
+  }
+  int metadataId = metaLocation[chunkPos.z*worldWidth*WORLD_HEIGHT_CHUNKS + chunkPos.x*WORLD_HEIGHT_CHUNKS + chunkPos.y];
+  int metadata = 0;
+
+  if (metadataId != 0) {
+    metadata = blockMetadata[(metadataId-1)*CHUNK_SIZE + (current.y<<8) + (current.z<<4) + current.x];
+  }
+
+  chunkPos += offset; //TODO understand what this does
+  if (current.x != last.x) {
+    float distanceX = current.x+16*(chunkPos.x-renderDistance)-pos.x;
+    if (current.x > last.x) {
+      texX = mod(distanceX*dir.z/dir.x + pos.z, 1);
+      texY = mod(-(distanceX*dir.y/dir.x + pos.y), 1);
+      side = 4;
+    } else {
+      texX = mod(-((distanceX+1)*dir.z/dir.x + pos.z), 1);
+      texY = mod(-((distanceX+1)*dir.y/dir.x + pos.y), 1);
+      side = 5;
+    }
+  } else if (current.y != last.y) {
+    float distanceY = current.y + 16*(chunkPos.y-chunkHeight) - pos.y;
+    if (current.y > last.y) {
+      texX = mod(distanceY*dir.x/dir.y + pos.x, 1);
+      texY = mod(-(distanceY*dir.z/dir.y + pos.z), 1);
+      side = 0;
+    } else {
+      texX = mod((distanceY+1)*dir.x/dir.y + pos.x, 1);
+      texY = mod((distanceY+1)*dir.z/dir.y + pos.z, 1);
+      side = 1;
+    }
+  } else { //if (current.z != last.z) {
+    float distanceZ = current.z + 16*(chunkPos.z-renderDistance) - pos.z;
+    if (current.z > last.z) {
+      texX = mod(-(distanceZ*dir.x/dir.z + pos.x), 1);
+      texY = mod(-(distanceZ*dir.y/dir.z + pos.y), 1);
+      side = 2;
+    } else {
+      texX = mod((distanceZ+1)*dir.x/dir.z + pos.x, 1);
+      texY = mod(-((distanceZ+1)*dir.y/dir.z + pos.y), 1);
+      side = 3;
+    }
+  }
+
+  return drawTexture(blockId, side, texX, texY, light, metadata, nearestCube, inc, iinc, current, last, chunkPos);
+}
+
+void trace(inout ivec3 current, vec3 nearestCube, vec3 dir, vec3 pos, ivec3 chunkPos, vec3 inc, ivec3 iinc, ivec3 offset) {
+  ivec3 last = current;
+  int worldWidth = renderDistance*2+1;
+  int chunkId = location[chunkPos.z*worldWidth*WORLD_HEIGHT_CHUNKS + chunkPos.x*WORLD_HEIGHT_CHUNKS + chunkPos.y];
+  //TODO if player is above the world
+  int lastChunkId = chunkId; //used for light levels
+  int blockId = 0;
+  if (chunkId != 0) {
+    blockId = blockData[(chunkId-1)*CHUNK_SIZE + (current.y<<8) + (current.z<<4) + current.x].id;
+  }
+  bool blockFound = false;
+  if (blockId != 0) {
+    blockFound = setupTraceFirstBlock(); //TODO
+  }
   while (!blockFound) {
     blockId = 0;
     while (blockId == 0) {
-      //TODO improve direction testing
-      last = current;
-      lastChunkId = chunkId;
-
-      //Next cube
-      if (nearestCube.x < nearestCube.y) {
-        if (nearestCube.x < nearestCube.z) {
-            nearestCube.x += inc.x;
-            current.x += iinc.x;
-            if ((current.x&16) == 16) {
-              current.x &= 15;
-              last.x = current.x - iinc.x;
-              chunkPos.x += iinc.x;
-              if (chunkPos.x == worldWidth || chunkPos.x == -1) {
-                return;
-              }
-              chunkId = location[chunkPos.z*worldWidth*WORLD_HEIGHT_CHUNKS + chunkPos.x*WORLD_HEIGHT_CHUNKS + chunkPos.y];
-            }
-        } else {
-            nearestCube.z += inc.z;
-            current.z += iinc.z;
-            if ((current.z&16) == 16) {
-              current.z &= 15;
-              last.z = current.z - iinc.z;
-              chunkPos.z += iinc.z;
-              if (chunkPos.z == worldWidth || chunkPos.z == -1) {
-                return;
-              }
-              chunkId = location[chunkPos.z*worldWidth*WORLD_HEIGHT_CHUNKS + chunkPos.x*WORLD_HEIGHT_CHUNKS + chunkPos.y];
-            }
-        }
-      } else {
-        if (nearestCube.y < nearestCube.z) {
-            nearestCube.y += inc.y;
-            current.y += iinc.y;
-            if ((current.y&16) == 16) {
-              current.y &= 15;
-              last.y = current.y - iinc.y;
-              chunkPos.y += iinc.y;
-              if (chunkPos.y == WORLD_HEIGHT_CHUNKS || chunkPos.y == -1) {
-                return;
-              }
-              chunkId = location[chunkPos.z*worldWidth*WORLD_HEIGHT_CHUNKS + chunkPos.x*WORLD_HEIGHT_CHUNKS + chunkPos.y];
-            }
-        } else {
-            nearestCube.z += inc.z;
-            current.z += iinc.z;
-            if ((current.z&16) == 16) {
-              current.z &= 15;
-              last.z = current.z - iinc.z;
-              chunkPos.z += iinc.z;
-              if (chunkPos.z == worldWidth || chunkPos.z == -1) {
-                return;
-              }
-              chunkId = location[chunkPos.z*worldWidth*WORLD_HEIGHT_CHUNKS + chunkPos.x*WORLD_HEIGHT_CHUNKS + chunkPos.y];
-            }
-        }
-      }
-
-      //skip empty chunks
-      //if (chunkId == 0) {
-        //bool success = skipChunk(current, nearestCube, chunkPos, dir, pos, inc, iinc, worldWidth);
-        //if (!success) {
-          //return;
-        //}
-      //}
-
-      if (chunkId != 0) {
-        blockId = blockData[(chunkId-1)*CHUNK_SIZE + (current.y<<8) + (current.z<<4) + current.x].id;
-      }
-
-    } //else if (block != air)
-
-    int light = 15;
-    if (lastChunkId != 0) {
-      light = blockData[(lastChunkId-1)*CHUNK_SIZE + ((last.y%16)<<8) + ((last.z%16)<<4) + (last.x%16)].lightLevel;
+      blockId = nextCube(nearestCube, current, last, chunkPos, chunkId, lastChunkId, inc, iinc, worldWidth);
     }
-    int metadataId = metaLocation[chunkPos.z*worldWidth*WORLD_HEIGHT_CHUNKS + chunkPos.x*WORLD_HEIGHT_CHUNKS + chunkPos.y];
-    int metadata = 0;
-
-    if (metadataId != 0) {
-      metadata = blockMetadata[(metadataId-1)*CHUNK_SIZE + (current.y<<8) + (current.z<<4) + current.x];
-    }
-
-    chunkPos += offset; //TODO understand what this does
-    if (current.x != last.x) {
-      float distanceX = current.x+16*(chunkPos.x-renderDistance)-pos.x;
-      if (current.x > last.x) {
-        texX = mod(distanceX*dir.z/dir.x + pos.z, 1);
-        texY = mod(-(distanceX*dir.y/dir.x + pos.y), 1);
-        side = 4;
-      } else {
-        texX = mod(-((distanceX+1)*dir.z/dir.x + pos.z), 1);
-        texY = mod(-((distanceX+1)*dir.y/dir.x + pos.y), 1);
-        side = 5;
-      }
-    } else if (current.y != last.y) {
-      float distanceY = current.y + 16*(chunkPos.y-chunkHeight) - pos.y;
-      if (current.y > last.y) {
-        texX = mod(distanceY*dir.x/dir.y + pos.x, 1);
-        texY = mod(-(distanceY*dir.z/dir.y + pos.z), 1);
-        side = 0;
-      } else {
-        texX = mod((distanceY+1)*dir.x/dir.y + pos.x, 1);
-        texY = mod((distanceY+1)*dir.z/dir.y + pos.z, 1);
-        side = 1;
-      }
-    } else { //if (current.z != last.z) {
-      float distanceZ = current.z + 16*(chunkPos.z-renderDistance) - pos.z;
-      if (current.z > last.z) {
-        texX = mod(-(distanceZ*dir.x/dir.z + pos.x), 1);
-        texY = mod(-(distanceZ*dir.y/dir.z + pos.y), 1);
-        side = 2;
-      } else {
-        texX = mod((distanceZ+1)*dir.x/dir.z + pos.x, 1);
-        texY = mod(-((distanceZ+1)*dir.y/dir.z + pos.y), 1);
-        side = 3;
-      }
-    }
-    chunkPos -= offset;
-    if (blockId == 5) {
-      blockFound = traceBlock(blockId, nearestCube, inc, iinc, current, last);
-    } else {
-      blockFound = drawTexture(blockId, side, texX, texY, light, metadata);
-    }
+    blockFound = setupDrawBlock(blockId, current, last, nearestCube, dir, pos, inc, iinc, chunkPos, offset, lastChunkId, worldWidth);
   }
 }
 

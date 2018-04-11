@@ -63,9 +63,29 @@ public class Shader {
 		GL15.glBindBuffer(GL15.GL_ARRAY_BUFFER, 0);
 		
 		//load voxels
-		FloatBuffer buffer = BufferUtils.createFloatBuffer(16*16*16*4);
-		byte[] data = Reader.readVoxel("/mod/id107/raytracer/voxel/frame.mcvox");
-		for (int i = 0; i < data.length; i++) {
+		FloatBuffer buffer = BufferUtils.createFloatBuffer(16*16*16*4*6);
+		byte[] data = Reader.readVoxel("/mod/id107/raytracer/voxel/error.mcvox");
+		for (int i = 16; i < data.length; i++) {
+			buffer.put(((int)data[i]&0xFF)/255f);
+		}
+		data = Reader.readVoxel("/mod/id107/raytracer/voxel/crafting_table.mcvox");
+		for (int i = 16; i < data.length; i++) {
+			buffer.put(((int)data[i]&0xFF)/255f);
+		}
+		data = Reader.readVoxel("/mod/id107/raytracer/voxel/bookshelf.mcvox");
+		for (int i = 16; i < data.length; i++) {
+			buffer.put(((int)data[i]&0xFF)/255f);
+		}
+		data = Reader.readVoxel("/mod/id107/raytracer/voxel/ladder.mcvox");
+		for (int i = 16; i < data.length; i++) {
+			buffer.put(((int)data[i]&0xFF)/255f);
+		}
+		data = Reader.readVoxel("/mod/id107/raytracer/voxel/door_oak_lower.mcvox");
+		for (int i = 16; i < data.length; i++) {
+			buffer.put(((int)data[i]&0xFF)/255f);
+		}
+		data = Reader.readVoxel("/mod/id107/raytracer/voxel/door_oak_upper.mcvox");
+		for (int i = 16; i < data.length; i++) {
 			buffer.put(((int)data[i]&0xFF)/255f);
 		}
 		buffer.flip();

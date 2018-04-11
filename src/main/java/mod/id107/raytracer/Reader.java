@@ -8,7 +8,7 @@ import java.util.Arrays;
 
 public class Reader {
 	
-	private static final byte[] header = {0,0,0,1, 0,0,0,16, 0,0,0,16, 0,0,0,16};
+	private static final byte[] header = {0,0,0,2, 0,0,0,16, 0,0,0,16, 0,0,0,16};
 
 	public static String readShader(String resourceIn) {
 		InputStream is = Reader.class.getResourceAsStream(resourceIn);
@@ -41,7 +41,7 @@ public class Reader {
 		try {
 			is.read(data);
 			if (Arrays.equals(data, header)) {
-				data = new byte[16*16*16*4];
+				data = new byte[16 + 16*16*16*4];
 				is.read(data);
 				is.close();
 			}

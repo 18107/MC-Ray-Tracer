@@ -1,10 +1,18 @@
 package mod.id107.raytracer;
 
+import java.awt.image.BufferedImage;
 import java.io.IOException;
 import java.io.InputStream;
 import java.nio.file.Files;
 import java.nio.file.Paths;
 import java.util.Arrays;
+
+import javax.imageio.ImageIO;
+
+import net.minecraft.client.Minecraft;
+import net.minecraft.client.resources.IResource;
+import net.minecraft.client.resources.IResourceManager;
+import net.minecraft.util.ResourceLocation;
 
 public class Reader {
 	
@@ -35,14 +43,18 @@ public class Reader {
 		return sb.toString();
 	}
 	
-	public static byte[] readVoxel(String fileName) {
+	public static int[] readVoxel(String fileName) {
 		InputStream is = Reader.class.getResourceAsStream(fileName);
-		byte[] data = new byte[16];
+		int[] data = new int[header.length];
 		try {
-			is.read(data);
-			if (Arrays.equals(data, header)) {
-				data = new byte[16 + 16*16*16*4];
-				is.read(data);
+			for (int i = 0; i < header.length; i++) {
+				data[i] = is.read();
+			}
+			if (Arrays.equals(data, new int[] {0,0,0,2, 0,0,0,16, 0,0,0,16, 0,0,0,16})) {
+				data = new int[16 + 16*16*16*4];
+				for (int i = 0; i < data.length; i++) {
+					data[i] = is.read();
+				}
 				is.close();
 			}
 			return data;
@@ -50,5 +62,42 @@ public class Reader {
 			e.printStackTrace();
 			return null;
 		}
+	}
+	
+	public static int[] readTexture(String fileName) {
+		IResourceManager resourceManager = Minecraft.getMinecraft().getResourceManager();
+		IResource resource = null;
+		try {
+			resource = resourceManager.getResource(new ResourceLocation(fileName));
+		} catch (IOException e) {
+			e.printStackTrace();
+			return null;
+		}
+		InputStream is = resource.getInputStream();
+		BufferedImage bufferedImage = null;
+		try {
+			bufferedImage = ImageIO.read(is);
+		} catch (IOException e) {
+			e.printStackTrace();
+			return null;
+		}
+		int width = bufferedImage.getWidth();
+		int height = bufferedImage.getHeight();
+		int[] data = new int[width*height*4];
+		for (int y = 0; y < height; y++) {
+			for (int x = 0; x < width; x++) {
+				int color = bufferedImage.getRGB(x, y);
+				data[y*width*4 + x*4] = (color>>16) & 0xFF;
+				data[y*width*4 + x*4 + 1] = (color>>8) & 0xFF;
+				data[y*width*4 + x*4 + 2] = color & 0xFF;
+				data[y*width*4 + x*4 + 3] = (color>>24) & 0xFF;
+			}
+		}
+		try {
+			is.close();
+		} catch (IOException e) {
+			e.printStackTrace();
+		}
+		return data;
 	}
 }

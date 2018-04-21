@@ -63,6 +63,11 @@ layout(std430, binding = 6) buffer voxelData
   vec4 voxelColor[];
 };
 
+layout(std430, binding = 7) buffer textureData
+{
+  vec4 textureColor[];
+};
+
 vec3 rotate(vec3 camera, vec3 ray) {
   //rotate z
   float x = cos(camera.z)*ray.x + sin(camera.z)*ray.y;
@@ -1128,7 +1133,10 @@ bool drawTexture(int id, int side, float xIn, float yIn, int light, int metadata
     return setupTraceBlock(0, nearestCube, inc, iinc, current, last, rotation[4], false);
   }
   //TODO do sunlight
-  color = texture(tex, vec2((x + xIn)/32, (y + yIn)/32))/* * vec4((light+1)/16.0, (light+1)/16.0, (light+1)/16.0, 1)*/;
+  color = texture(tex, vec2(x + xIn, y + yIn)/32)/* * vec4((light+1)/16.0, (light+1)/16.0, (light+1)/16.0, 1)*/;
+  if (id == 5) {
+    color = textureColor[int(floor(xIn*16)) + int(floor(yIn*16))*16];
+  }
   if (color.a == 0) {
     return false;
   }
@@ -1257,8 +1265,25 @@ bool setupDrawBlock(int blockId, ivec3 current, ivec3 last, vec3 nearestCube, ve
     metadata = blockMetadata[(metadataId-1)*CHUNK_SIZE + (current.y<<8) + (current.z<<4) + current.x];
   }
 
-  chunkPos += offset; //TODO understand what this does
+  mat3 matrix = mat3(1,0,0, 0,1,0, 0,0,1); //TODO rename
   if (current.x != last.x) {
+    float plane = nearestCube.x - inc.x;
+    float distanceY = (nearestCube.y - plane)/inc.y;
+    float distanceZ = (nearestCube.z - plane)/inc.z;
+    texY = 1-(iinc.y+1)/2 + distanceY*iinc.y;
+    texX = (iinc.z+1)/2 - distanceZ*iinc.z;
+    if (current.x > last.x) {
+      side = 4;
+    } else {
+      side = 5;
+    }
+  } else if (current.y != last.y) {
+
+  } else { //if (current.z != last.z)
+
+  }
+  chunkPos += offset; //TODO understand what this does
+  /*if (current.x != last.x) {
     float distanceX = current.x+16*(chunkPos.x-renderDistance)-pos.x;
     if (current.x > last.x) {
       texX = mod(distanceX*dir.z/dir.x + pos.z, 1);
@@ -1269,7 +1294,7 @@ bool setupDrawBlock(int blockId, ivec3 current, ivec3 last, vec3 nearestCube, ve
       texY = mod(-((distanceX+1)*dir.y/dir.x + pos.y), 1);
       side = 5;
     }
-  } else if (current.y != last.y) {
+  } else*/ if (current.y != last.y) {
     float distanceY = current.y + 16*(chunkPos.y-chunkHeight) - pos.y;
     if (current.y > last.y) {
       texX = mod(distanceY*dir.x/dir.y + pos.x, 1);
@@ -1280,7 +1305,7 @@ bool setupDrawBlock(int blockId, ivec3 current, ivec3 last, vec3 nearestCube, ve
       texY = mod((distanceY+1)*dir.z/dir.y + pos.z, 1);
       side = 1;
     }
-  } else { //if (current.z != last.z) {
+  } else if (current.z != last.z) {
     float distanceZ = current.z + 16*(chunkPos.z-renderDistance) - pos.z;
     if (current.z > last.z) {
       texX = mod(-(distanceZ*dir.x/dir.z + pos.x), 1);

@@ -20,6 +20,7 @@ public class Shader {
 	private int worldMetadataSsbo;
 	private int metadataSsbo;
 	private int voxelDataSsbo;
+	private int textureDataSsbo;
 	
 	public void createShaderProgram() {
 		shaderProgram = GL20.glCreateProgram();
@@ -62,39 +63,18 @@ public class Shader {
 		GL15.glBufferData(GL15.GL_ARRAY_BUFFER, bb, GL15.GL_STATIC_DRAW);
 		GL15.glBindBuffer(GL15.GL_ARRAY_BUFFER, 0);
 		
-		//load voxels
-		FloatBuffer buffer = BufferUtils.createFloatBuffer(16*16*16*4*6);
-		byte[] data = Reader.readVoxel("/mod/id107/raytracer/voxel/error.mcvox");
-		for (int i = 16; i < data.length; i++) {
-			buffer.put(((int)data[i]&0xFF)/255f);
-		}
-		data = Reader.readVoxel("/mod/id107/raytracer/voxel/crafting_table.mcvox");
-		for (int i = 16; i < data.length; i++) {
-			buffer.put(((int)data[i]&0xFF)/255f);
-		}
-		data = Reader.readVoxel("/mod/id107/raytracer/voxel/bookshelf.mcvox");
-		for (int i = 16; i < data.length; i++) {
-			buffer.put(((int)data[i]&0xFF)/255f);
-		}
-		data = Reader.readVoxel("/mod/id107/raytracer/voxel/ladder.mcvox");
-		for (int i = 16; i < data.length; i++) {
-			buffer.put(((int)data[i]&0xFF)/255f);
-		}
-		data = Reader.readVoxel("/mod/id107/raytracer/voxel/door_oak_lower.mcvox");
-		for (int i = 16; i < data.length; i++) {
-			buffer.put(((int)data[i]&0xFF)/255f);
-		}
-		data = Reader.readVoxel("/mod/id107/raytracer/voxel/door_oak_upper.mcvox");
-		for (int i = 16; i < data.length; i++) {
-			buffer.put(((int)data[i]&0xFF)/255f);
-		}
-		buffer.flip();
+		//load voxels TODO move this to a better location
+		FloatBuffer voxelBuffer = loadVoxels();
+		
+		//load textures
+		FloatBuffer textureBuffer = loadTextures();
 		
 		worldChunkSsbo = GL15.glGenBuffers();
 		chunkSsbo = GL15.glGenBuffers();
 		worldMetadataSsbo = GL15.glGenBuffers();
 		metadataSsbo = GL15.glGenBuffers();
 		voxelDataSsbo = GL15.glGenBuffers();
+		textureDataSsbo = GL15.glGenBuffers();
 		
 		GL15.glBindBuffer(GL43.GL_SHADER_STORAGE_BUFFER, worldChunkSsbo);
 		GL15.glBufferData(GL43.GL_SHADER_STORAGE_BUFFER, 0, GL15.GL_DYNAMIC_DRAW);
@@ -113,8 +93,12 @@ public class Shader {
 		GL30.glBindBufferBase(GL43.GL_SHADER_STORAGE_BUFFER, 5, metadataSsbo);
 		
 		GL15.glBindBuffer(GL43.GL_SHADER_STORAGE_BUFFER, voxelDataSsbo);
-		GL15.glBufferData(GL43.GL_SHADER_STORAGE_BUFFER, buffer, GL15.GL_STATIC_DRAW);
+		GL15.glBufferData(GL43.GL_SHADER_STORAGE_BUFFER, voxelBuffer, GL15.GL_STATIC_DRAW);
 		GL30.glBindBufferBase(GL43.GL_SHADER_STORAGE_BUFFER, 6, voxelDataSsbo);
+		
+		GL15.glBindBuffer(GL43.GL_SHADER_STORAGE_BUFFER, textureDataSsbo);
+		GL15.glBufferData(GL43.GL_SHADER_STORAGE_BUFFER, textureBuffer, GL15.GL_STATIC_DRAW);
+		GL30.glBindBufferBase(GL43.GL_SHADER_STORAGE_BUFFER, 7, textureDataSsbo);
 		GL15.glBindBuffer(GL43.GL_SHADER_STORAGE_BUFFER, 0);
 	}
 	
@@ -133,6 +117,50 @@ public class Shader {
 		return shader;
 	}
 	
+	/**Loads all of the voxel grids into a {@link FloatBuffer}
+	 * @return the flipped buffer*/
+	private FloatBuffer loadVoxels() {
+		FloatBuffer voxelBuffer = BufferUtils.createFloatBuffer(16*16*16*4*6);
+		int[] data = Reader.readVoxel("/mod/id107/raytracer/voxel/error.mcvox");
+		for (int i = 16; i < data.length; i++) {
+			voxelBuffer.put(data[i]/255f);
+		}
+		data = Reader.readVoxel("/mod/id107/raytracer/voxel/crafting_table.mcvox");
+		for (int i = 16; i < data.length; i++) {
+			voxelBuffer.put(data[i]/255f);
+		}
+		data = Reader.readVoxel("/mod/id107/raytracer/voxel/bookshelf.mcvox");
+		for (int i = 16; i < data.length; i++) {
+			voxelBuffer.put(data[i]/255f);
+		}
+		data = Reader.readVoxel("/mod/id107/raytracer/voxel/ladder.mcvox");
+		for (int i = 16; i < data.length; i++) {
+			voxelBuffer.put(data[i]/255f);
+		}
+		data = Reader.readVoxel("/mod/id107/raytracer/voxel/door_oak_lower.mcvox");
+		for (int i = 16; i < data.length; i++) {
+			voxelBuffer.put(data[i]/255f);
+		}
+		data = Reader.readVoxel("/mod/id107/raytracer/voxel/door_oak_upper.mcvox");
+		for (int i = 16; i < data.length; i++) {
+			voxelBuffer.put(data[i]/255f);
+		}
+		voxelBuffer.flip();
+		return voxelBuffer;
+	}
+	
+	/**Loads all of the textures into a {@link FloatBuffer}
+	 * @return the flipped buffer*/
+	private FloatBuffer loadTextures() {
+		FloatBuffer textureBuffer = BufferUtils.createFloatBuffer(16*16*4);
+		int[] data = Reader.readTexture("textures/blocks/planks_oak.png");
+		for (int i = 0; i < data.length; i++) {
+			textureBuffer.put(data[i]/255f);
+		}
+		textureBuffer.flip();
+		return textureBuffer;
+	}
+	
 	public void deleteShaderProgram() {
 		GL15.glDeleteBuffers(vbo);
 		vbo = 0;
@@ -146,6 +174,8 @@ public class Shader {
 		metadataSsbo = 0;
 		GL15.glDeleteBuffers(voxelDataSsbo);
 		voxelDataSsbo = 0;
+		GL15.glDeleteBuffers(textureDataSsbo);
+		textureDataSsbo = 0;
 		GL20.glDeleteProgram(shaderProgram);
 		shaderProgram = 0;
 	}
@@ -176,5 +206,9 @@ public class Shader {
 	
 	public int getVoxelDataSsbo() {
 		return voxelDataSsbo;
+	}
+	
+	public int getTextureDataSsbo() {
+		return textureDataSsbo;
 	}
 }

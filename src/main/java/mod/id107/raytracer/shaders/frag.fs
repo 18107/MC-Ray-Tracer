@@ -9,12 +9,12 @@
 #define TEXTURE_RESOLUTION 16
 
 const mat4 rotation[6] = mat4[](
-  mat4(0,0,1,0, 0,1,0,0, -1,0,0,0, 1,0,0,1),
-  mat4(0,0,-1,0, 0,1,0,0, 1,0,0,0, 0,0,1,1),
-  mat4(1,0,0,0, 0,1,0,0, 0,0,1,0, 0,0,0,1), //TODO
-  mat4(1,0,0,0, 0,1,0,0, 0,0,1,0, 0,0,0,1), //TODO
   mat4(1,0,0,0, 0,1,0,0, 0,0,1,0, 0,0,0,1),
-  mat4(-1,0,0,0, 0,1,0,0, 0,0,-1,0, 1,0,1,1)
+  mat4(0,0,-1,0, 0,1,0,0, 1,0,0,0, 0,0,1,1),
+  mat4(-1,0,0,0, 0,1,0,0, 0,0,-1,0, 1,0,1,1),
+  mat4(0,0,1,0, 0,1,0,0, -1,0,0,0, 1,0,0,1),
+  mat4(1,0,0,0, 0,0,1,0, 0,-1,0,0, 0,1,0,1),
+  mat4(1,0,0,0, 0,0,-1,0, 0,1,0,0, 0,0,1,1)
 );
 
 in vec2 texcoord;
@@ -822,7 +822,7 @@ bool drawTexture(int id, int side, float xIn, float yIn, int light, int metadata
     int md0;
     int md1;
     int id;
-    mat4 rot = rotation[4];
+    mat4 rot = rotation[0];
     if ((metadata & 8) == 0) {
       md0 = metadata;
       id = 4;
@@ -855,15 +855,15 @@ bool drawTexture(int id, int side, float xIn, float yIn, int light, int metadata
         break;
       case 1:
       case 14:
-        rot = rotation[5]; //south
+        rot = rotation[2]; //south
         break;
       case 2:
       case 15:
-        rot = rotation[0]; //west
+        rot = rotation[3]; //west
         break;
       case 3:
       case 12:
-        rot = rotation[4]; //north
+        rot = rotation[0]; //north
         break;
       case 8:
       case 7:
@@ -887,16 +887,16 @@ bool drawTexture(int id, int side, float xIn, float yIn, int light, int metadata
     mat4 matrix;
     switch (metadata) {
     case 2:
-      matrix = rotation[5];
+      matrix = rotation[2];
       break;
     case 4:
       matrix = rotation[1];
       break;
     case 5:
-      matrix = rotation[0];
+      matrix = rotation[3];
       break;
     default:
-      matrix = rotation[4];
+      matrix = rotation[0];
       break;
     }
     return setupTraceBlock(3, nearestCube, inc, iinc, current, last, matrix, false);
@@ -1130,11 +1130,11 @@ bool drawTexture(int id, int side, float xIn, float yIn, int light, int metadata
     break;
     */
   default:
-    return setupTraceBlock(0, nearestCube, inc, iinc, current, last, rotation[4], false);
+    return setupTraceBlock(0, nearestCube, inc, iinc, current, last, rotation[0], false);
   }
   //TODO do sunlight
   color = texture(tex, vec2(x + xIn, y + yIn)/32)/* * vec4((light+1)/16.0, (light+1)/16.0, (light+1)/16.0, 1)*/;
-  if (id == 5) {
+  if (id == 1) {
     color = textureColor[int(floor(xIn*16)) + int(floor(yIn*16))*16];
   }
   if (color.a == 0) {
@@ -1275,6 +1275,7 @@ bool setupDrawBlock(int blockId, ivec3 current, ivec3 last, vec3 nearestCube, ve
     if (current.x > last.x) {
       side = 4;
     } else {
+      texX = 1-texX;
       side = 5;
     }
   } else if (current.y != last.y) {

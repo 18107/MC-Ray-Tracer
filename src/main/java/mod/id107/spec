@@ -1,0 +1,45 @@
+-z front, x right, y top
+
+Hardcoded matricies
+	column major order
+	0: (1,0,0,0, 0,1,0,0, 0,0,1,0, 0,0,0,1)   z ->  z, x ->  x  no rotation    south
+	1: (0,0,-1,0, 0,1,0,0, 1,0,0,0, 0,0,1,1)  z ->  x, x -> -z  clockwise      west
+	2: (-1,0,0,0, 0,1,0,0, 0,0,-1,0, 1,0,1,1) z -> -z, x -> -x  180 degrees    north
+	3: (0,0,1,0, 0,1,0,0, -1,0,0,0, 1,0,0,1)  z -> -x, x ->  z  anticlockwise  east
+	4: (1,0,0,0, 0,0,1,0, 0,-1,0,0, 0,1,0,1)  z -> -y, y ->  z  up
+	5: (1,0,0,0, 0,0,-1,0, 0,1,0,0, 0,0,1,1)  z ->  y, y -> -z  down
+
+Chunks
+	[z*height*width + y*width + x]
+	Block id:
+		int32
+	rotation:
+		int32
+		refers to hardcoded matricies
+	Light level
+		int32
+
+Id map
+	[id][side(x,-x,y,-y,z,-z)]
+	texture or voxelgrid
+		bool32
+		texture = false, voxelgrid = true
+	textureId or voxelId
+		int32
+	rotation
+		int32
+		refers to hardcoded matricies
+		only valid for voxelgrid
+
+Textures
+	[textureId*height*width + y*width + x]
+	vec4 (4*float32)
+	rgba
+
+Voxel grid
+	[voxelId*depth*height*width + z*height*width + y*width + x]
+	vec4 (4*float32)
+	rgba
+
+qb file format: http://minddesk.com/learn/article.php?id=22
+    last accessed 2018-05-11T10:24:33

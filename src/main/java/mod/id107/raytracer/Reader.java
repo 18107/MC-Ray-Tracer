@@ -43,25 +43,58 @@ public class Reader {
 		return sb.toString();
 	}
 	
-	public static int[] readVoxel(String fileName) {
+	public static int[] readQubicle(String fileName) throws IOException {
 		InputStream is = Reader.class.getResourceAsStream(fileName);
-		int[] data = new int[header.length];
-		try {
-			for (int i = 0; i < header.length; i++) {
-				data[i] = is.read();
-			}
-			if (Arrays.equals(data, new int[] {0,0,0,2, 0,0,0,16, 0,0,0,16, 0,0,0,16})) {
-				data = new int[16 + 16*16*16*4];
-				for (int i = 0; i < data.length; i++) {
-					data[i] = is.read();
-				}
-				is.close();
-			}
-			return data;
-		} catch (IOException e) {
-			e.printStackTrace();
-			return null;
+		if (is == null) {
+			throw new IOException("File not found: " + fileName);
 		}
+		byte[] data = new byte[4];
+		is.read(data);
+		if (!Arrays.equals(data, new byte[] {1,1,0,0})) {
+			throw new IOException(String.format("%s Got version %d.%d.%d.%d, supported version is %d.%d.%d.%d",
+					fileName, data[0], data[1], data[2], data[3], 1, 1, 0, 0));
+		}
+		is.read(data);
+		if (!Arrays.equals(data, new byte[] {0,0,0,0})) {
+			throw new IOException(String.format("%s Color must be RGBA, not BGRA", fileName));
+		}
+		is.read(data);
+		if (!Arrays.equals(data, new byte[] {1,0,0,0})) {
+			throw new IOException(String.format("%s Axis must be right handed", fileName));
+		}
+		is.read(data);
+		if (!Arrays.equals(data, new byte[] {0,0,0,0})) {
+			throw new IOException(String.format("%s Data must not be compressed", fileName));
+		}
+		is.read(data); //visibility mask encoded
+		is.read(data);
+		int matrixCount = (data[0]&0xFF) | ((data[1]&0xFF)<<8) | ((data[2]&0xFF)<<16) | ((data[3]&0xFF)<<24);
+		if (matrixCount != 1) {
+			Log.info("Support for multiple matricies has not been implemented yet");
+			Log.info("Using first matrix only for " + fileName);
+		}
+		int nameLength = is.read();
+		byte[] name = new byte[nameLength];
+		is.read(name);
+		is.read(data);
+		int xSize = (data[0]&0xFF) | ((data[1]&0xFF)<<8) | ((data[2]&0xFF)<<16) | ((data[3]&0xFF)<<24);
+		is.read(data);
+		int ySize = (data[0]&0xFF) | ((data[1]&0xFF)<<8) | ((data[2]&0xFF)<<16) | ((data[3]&0xFF)<<24);
+		is.read(data);
+		int zSize = (data[0]&0xFF) | ((data[1]&0xFF)<<8) | ((data[2]&0xFF)<<16) | ((data[3]&0xFF)<<24);
+		if (xSize != 16 || ySize != 16 || zSize != 16) {
+			throw new IOException(String.format("%s Voxel grid is %dx%dx%d. It must be 16x16x16",
+					fileName, xSize, ySize, zSize));
+		}
+		is.read(data); //xPos
+		is.read(data); //yPos
+		is.read(data); //zPos
+		int[] matrix = new int[xSize*ySize*zSize*4];
+		for (int i = 0; i < matrix.length; i++) {
+			matrix[i] = is.read();
+		}
+		is.close();
+		return matrix;
 	}
 	
 	public static int[] readTexture(String fileName) {

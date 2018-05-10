@@ -1,5 +1,6 @@
 package mod.id107.raytracer;
 
+import java.io.IOException;
 import java.nio.ByteBuffer;
 import java.nio.FloatBuffer;
 
@@ -8,6 +9,8 @@ import org.lwjgl.opengl.GL15;
 import org.lwjgl.opengl.GL20;
 import org.lwjgl.opengl.GL30;
 import org.lwjgl.opengl.GL43;
+
+import mod.id107.raytracer.chunk.MapUtil;
 
 public class Shader {
 
@@ -120,30 +123,18 @@ public class Shader {
 	/**Loads all of the voxel grids into a {@link FloatBuffer}
 	 * @return the flipped buffer*/
 	private FloatBuffer loadVoxels() {
-		FloatBuffer voxelBuffer = BufferUtils.createFloatBuffer(16*16*16*4*6);
-		int[] data = Reader.readVoxel("/mod/id107/raytracer/voxel/error.mcvox");
-		for (int i = 16; i < data.length; i++) {
-			voxelBuffer.put(data[i]/255f);
-		}
-		data = Reader.readVoxel("/mod/id107/raytracer/voxel/crafting_table.mcvox");
-		for (int i = 16; i < data.length; i++) {
-			voxelBuffer.put(data[i]/255f);
-		}
-		data = Reader.readVoxel("/mod/id107/raytracer/voxel/bookshelf.mcvox");
-		for (int i = 16; i < data.length; i++) {
-			voxelBuffer.put(data[i]/255f);
-		}
-		data = Reader.readVoxel("/mod/id107/raytracer/voxel/ladder.mcvox");
-		for (int i = 16; i < data.length; i++) {
-			voxelBuffer.put(data[i]/255f);
-		}
-		data = Reader.readVoxel("/mod/id107/raytracer/voxel/door_oak_lower.mcvox");
-		for (int i = 16; i < data.length; i++) {
-			voxelBuffer.put(data[i]/255f);
-		}
-		data = Reader.readVoxel("/mod/id107/raytracer/voxel/door_oak_upper.mcvox");
-		for (int i = 16; i < data.length; i++) {
-			voxelBuffer.put(data[i]/255f);
+		String[] voxels = MapUtil.getAllVoxels();
+		FloatBuffer voxelBuffer = BufferUtils.createFloatBuffer(16*16*16*4*voxels.length);
+		int[] data;
+		try {
+			for (String voxel : voxels) {
+				data = Reader.readQubicle("/mod/id107/raytracer/voxel/" + voxel + ".qb"); //TODO
+				for (int i = 0; i < data.length; i++) {
+					voxelBuffer.put(data[i]/255f);
+				}
+			}
+		} catch (IOException e) {
+			throw new RuntimeException(e);
 		}
 		voxelBuffer.flip();
 		return voxelBuffer;
@@ -152,10 +143,14 @@ public class Shader {
 	/**Loads all of the textures into a {@link FloatBuffer}
 	 * @return the flipped buffer*/
 	private FloatBuffer loadTextures() {
-		FloatBuffer textureBuffer = BufferUtils.createFloatBuffer(16*16*4);
-		int[] data = Reader.readTexture("textures/blocks/planks_oak.png");
-		for (int i = 0; i < data.length; i++) {
-			textureBuffer.put(data[i]/255f);
+		String[] textures = MapUtil.getAllTextures();
+		FloatBuffer textureBuffer = BufferUtils.createFloatBuffer(16*16*4*textures.length);
+		int[] data;
+		for (String texture : textures) {
+			data = Reader.readTexture("textures/blocks/" + texture + ".png"); //TODO
+			for (int i = 0; i < data.length; i++) {
+				textureBuffer.put(data[i]/255f);
+			}
 		}
 		textureBuffer.flip();
 		return textureBuffer;

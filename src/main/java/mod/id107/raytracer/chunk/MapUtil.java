@@ -5,21 +5,31 @@ import java.util.HashMap;
 
 public class MapUtil {
 
-	private static int blockIndex = 0;
+	private static int blockIndex = -1;
 	private static HashMap<String, Integer> blocks = new HashMap<String, Integer>();
 	
-	private static int voxelIndex = 0;
+	private static int voxelIndex = -1;
 	private static HashMap<String, Integer> voxels = new HashMap<String, Integer>();
 	private static ArrayList<String> voxelKeys = new ArrayList<String>();
 	
-	private static int textureIndex = 0;
+	private static int textureIndex = -1;
 	private static HashMap<String, Integer> textures = new HashMap<String, Integer>();
 	private static ArrayList<String> textureKeys = new ArrayList<String>();
 	
 	static {
-		blocks.put("air", 0);
-		voxelKeys.add("error");
-		textureKeys.add("debug");//TODO
+		newBlock("air");
+	}
+	
+	public static void reset() {
+		blockIndex = -1;
+		blocks = new HashMap<String, Integer>();
+		voxelIndex = -1;
+		voxels = new HashMap<String, Integer>();
+		voxelKeys = new ArrayList<String>();
+		textureIndex = -1;
+		textures = new HashMap<String, Integer>();
+		textureKeys = new ArrayList<String>();
+		newBlock("air");
 	}
 	
 	public static int newBlock(String name) {
@@ -33,7 +43,7 @@ public class MapUtil {
 	public static int getBlock(String name) {
 		Integer id = blocks.get(name);
 		if (id == null) {
-			throw new RuntimeException("block not found");
+			throw new RuntimeException("block not found: " + name);
 		} else {
 			return id;
 		}
@@ -131,8 +141,8 @@ public class MapUtil {
 		return new int[][] {{0,id[0],rotation[0]}, {0,id[1],rotation[1]}, {0,id[1],rotation[2]}, {0,id[1],rotation[3]}, {0,id[1],rotation[4]}, {0,id[1],rotation[5]}};
 	}
 	
-	public static int getNumberOfBlocks() {
-		return blocks.size();
+	public static String[] getAllBlocks() {
+		return blocks.keySet().toArray(new String[0]);
 	}
 	
 	public static String[] getAllVoxels() {

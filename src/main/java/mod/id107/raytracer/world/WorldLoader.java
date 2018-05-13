@@ -12,6 +12,7 @@ import org.lwjgl.opengl.GL43;
 
 import mod.id107.raytracer.Log;
 import mod.id107.raytracer.Shader;
+import mod.id107.raytracer.chunk.Maps;
 import net.minecraft.block.Block;
 import net.minecraft.block.state.IBlockState;
 import net.minecraft.client.Minecraft;
@@ -36,17 +37,9 @@ public class WorldLoader {
 	 */
 	private int[] worldChunks;
 	/**
-	 * An array containing the location of all metadata in VRAM.
-	 */
-	private int[] worldMetadata;
-	/**
 	 * A list of free chunk id's
 	 */
 	private ArrayDeque<Integer> chunkIdList; //TODO minimize size?
-	/**
-	 * A list of free metadata id's
-	 */
-	private ArrayDeque<Integer> metadataIdList;
 	
 	/**
 	 * Used to check if the render distance has changed.
@@ -165,22 +158,14 @@ public class WorldLoader {
 		
 		//initialize the world
 		worldChunks = new int[(renderDistance*2-1)*16*(renderDistance*2-1)];
-		worldMetadata = new int[(renderDistance*2-1)*16*(renderDistance*2-1)];
 		chunkIdList = new ArrayDeque<Integer>();
-		metadataIdList = new ArrayDeque<Integer>();
 		for (int i = worldChunks.length; i > 0; i--) {
 			chunkIdList.push(i);
-		}
-		for (int i = worldMetadata.length; i > 0; i--) {
-			metadataIdList.push(i);
 		}
 		
 		//update the buffer size
 		GL15.glBindBuffer(GL43.GL_SHADER_STORAGE_BUFFER, shader.getChunkSsbo());
-		GL15.glBufferData(GL43.GL_SHADER_STORAGE_BUFFER, chunkSize*worldChunks.length*2*4, GL15.GL_DYNAMIC_DRAW);
-		
-		GL15.glBindBuffer(GL43.GL_SHADER_STORAGE_BUFFER, shader.getMetadataSsbo());
-		GL15.glBufferData(GL43.GL_SHADER_STORAGE_BUFFER, chunkSize*worldMetadata.length*4, GL15.GL_DYNAMIC_DRAW);
+		GL15.glBufferData(GL43.GL_SHADER_STORAGE_BUFFER, chunkSize*worldChunks.length*4*4, GL15.GL_DYNAMIC_DRAW);
 		GL15.glBindBuffer(GL43.GL_SHADER_STORAGE_BUFFER, 0);
 		
 		//inform the shader of the new render distance
@@ -222,14 +207,6 @@ public class WorldLoader {
 		worldChunkBuffer.flip();
 		GL15.glBindBuffer(GL43.GL_SHADER_STORAGE_BUFFER, shader.getWorldChunkSsbo());
 		GL15.glBufferData(GL43.GL_SHADER_STORAGE_BUFFER, worldChunkBuffer, GL15.GL_DYNAMIC_DRAW);
-		GL15.glBindBuffer(GL43.GL_SHADER_STORAGE_BUFFER, 0);
-
-		//upload metadata coordinates
-		IntBuffer worldMetadataBuffer = BufferUtils.createIntBuffer(worldMetadata.length);
-		worldMetadataBuffer.put(worldMetadata);
-		worldMetadataBuffer.flip();
-		GL15.glBindBuffer(GL43.GL_SHADER_STORAGE_BUFFER, shader.getWorldMetadataSsbo());
-		GL15.glBufferData(GL43.GL_SHADER_STORAGE_BUFFER, worldMetadataBuffer, GL15.GL_DYNAMIC_DRAW);
 		GL15.glBindBuffer(GL43.GL_SHADER_STORAGE_BUFFER, 0);
 	}
 	
@@ -322,14 +299,6 @@ public class WorldLoader {
 		GL15.glBindBuffer(GL43.GL_SHADER_STORAGE_BUFFER, shader.getWorldChunkSsbo());
 		GL15.glBufferData(GL43.GL_SHADER_STORAGE_BUFFER, buffer, GL15.GL_DYNAMIC_DRAW);
 		GL15.glBindBuffer(GL43.GL_SHADER_STORAGE_BUFFER, 0);
-
-		//upload metadata coordinates
-		IntBuffer worldMetadataBuffer = BufferUtils.createIntBuffer(worldMetadata.length);
-		worldMetadataBuffer.put(worldMetadata);
-		worldMetadataBuffer.flip();
-		GL15.glBindBuffer(GL43.GL_SHADER_STORAGE_BUFFER, shader.getWorldMetadataSsbo());
-		GL15.glBufferData(GL43.GL_SHADER_STORAGE_BUFFER, worldMetadataBuffer, GL15.GL_DYNAMIC_DRAW);
-		GL15.glBindBuffer(GL43.GL_SHADER_STORAGE_BUFFER, 0);
 	}
 	
 	//TODO lighting updates
@@ -338,7 +307,6 @@ public class WorldLoader {
 		for (int y = 0; y < 16; y++) {
 			ExtendedBlockStorage storage = chunk.getBlockStorageArray()[y];
 			int id = worldChunks[chunkZ*(renderDistance*2-1)*16 + chunkX*16 + y];
-			int metadataId = worldMetadata[chunkZ*(renderDistance*2-1)*16 + chunkX*16 + y];
 			if (storage == null) {
 				if (id == 0) {
 					//do nothing
@@ -347,10 +315,6 @@ public class WorldLoader {
 					//remove chunk
 					worldChunks[chunkZ*(renderDistance*2-1)*16 + chunkX*16 + y] = 0;
 					chunkIdList.push(id);
-					if (metadataId != 0) {
-						worldMetadata[chunkZ*(renderDistance*2-1)*16 + chunkX*16 + y] = 0;
-						metadataIdList.push(metadataId);
-					}
 					continue;
 				}
 			} else {
@@ -359,89 +323,36 @@ public class WorldLoader {
 					id = chunkIdList.pop();
 					worldChunks[chunkZ*(renderDistance*2-1)*16 + chunkX*16 + y] = id;
 				}
-				if (metadataId == 0) {
-					metadataId = metadataIdList.pop();
-					worldMetadata[chunkZ*(renderDistance*2-1)*16 + chunkX*16 + y] = metadataId;
-				}
 			}
 			loadChunk(id, shader, storage);
-			loadMetadata(metadataId, shader, storage);
 		}
 	}
-	
-	Set<IBlockState> stateSet = new HashSet<IBlockState>();
 	
 	//TODO handle lighting and metadata
 	private void loadChunk(int id, Shader shader, ExtendedBlockStorage storage) {
 		ObjectIntIdentityMap<IBlockState> map = GameData.getBlockStateIDMap();
-		int[] data = new int[chunkSize*2];
+		int[] data = new int[chunkSize*4];
 		for (int y = 0; y < 16; y++) {
 			for (int z = 0; z < 16; z++) {
 				for (int x = 0; x < 16; x++) {
 					IBlockState state = storage.get(x, y, z);
-					boolean fullBlock = state.isFullBlock();
-					boolean cube = state.isFullCube();
-					if (fullBlock != cube) {
-						//TODO
-						//Log.info(state.getBlock().getUnlocalizedName() + ": " + fullBlock);
-					}
-					if (fullBlock) {
-						stateSet.add(state);
-					}
 					int stateId = map.get(state); //TODO
-					data[(y<<9) + (z<<5) + (x<<1)] = Block.getIdFromBlock(storage.get(x, y, z).getBlock());
+					int oldId = Block.getStateId(state);
+					int[] newId = Maps.getBlock(oldId);
+					data[y*16*16*4 + z*16*4 + x*4] = newId[0];
+					data[y*16*16*4 + z*16*4 + x*4 + 1] = newId[1];
+					data[y*16*16*4 + z*16*4 + x*4 + 2] = storage.getBlocklightArray().get(x, y, z);
+					data[y*16*16*4 + z*16*4 + x*4 + 3] = 0;
 				}
 			}
 		}
 		
-		for (int y = 0; y < 16; y++) {
-			for (int z = 0; z < 16; z++) {
-				for (int x = 0; x < 16; x++) {
-					data[(y<<9) + (z<<5) + (x<<1) + 1] = storage.getBlocklightArray().get(x, y, z);
-				}
-			}
-		}
-		
-		IntBuffer buffer = BufferUtils.createIntBuffer(chunkSize*2);
+		IntBuffer buffer = BufferUtils.createIntBuffer(chunkSize*4);
 		buffer.put(data);
 		buffer.flip();
 		GL15.glBindBuffer(GL43.GL_SHADER_STORAGE_BUFFER, shader.getChunkSsbo());
-		GL15.glBufferSubData(GL43.GL_SHADER_STORAGE_BUFFER, (id-1)*chunkSize*2*4, buffer);
+		GL15.glBufferSubData(GL43.GL_SHADER_STORAGE_BUFFER, (id-1)*chunkSize*4*4, buffer);
 		GL15.glBindBuffer(GL43.GL_SHADER_STORAGE_BUFFER, 0);
-	}
-	
-	/**
-	 * 
-	 * @param id
-	 * @param shader
-	 * @param storage
-	 * @return true if the id was used, false if there was nothing to upload
-	 */
-	private boolean loadMetadata(int id, Shader shader, ExtendedBlockStorage storage) {
-		int[] data = new int[chunkSize];
-		boolean containsValues = false;
-		for (int y = 0; y < 16; y++) {
-			for (int z = 0; z < 16; z++) {
-				for (int x = 0; x < 16; x++) {
-					int metadata = storage.get(x, y, z).getBlock().getMetaFromState(storage.get(x, y, z));
-					data[(y<<8) + (z<<4) + x] = metadata;
-					if (metadata != 0) {
-						containsValues = true;
-					}
-				}
-			}
-		}
-		
-		if (containsValues) {
-			IntBuffer buffer = BufferUtils.createIntBuffer(chunkSize);
-			buffer.put(data);
-			buffer.flip();
-			GL15.glBindBuffer(GL43.GL_SHADER_STORAGE_BUFFER, shader.getMetadataSsbo());
-			GL15.glBufferSubData(GL43.GL_SHADER_STORAGE_BUFFER, (id-1)*chunkSize*4, buffer);
-			GL15.glBindBuffer(GL43.GL_SHADER_STORAGE_BUFFER, 0);
-		}
-		
-		return containsValues;
 	}
 	
 	private void moveX(Shader shader, int centerX, int centerZ, int renderDistance, boolean positive) {
@@ -451,10 +362,6 @@ public class WorldLoader {
 				int chunkId = worldChunks[z*(renderDistance*2-1)*16 + (positive ? 0 : renderDistance*2-2)*16 + y];
 				if (chunkId != 0) {
 					chunkIdList.push(chunkId);
-				}
-				int metadataId = worldMetadata[z*(renderDistance*2-1)*16 + (positive ? 0 : renderDistance*2-2)*16 + y];
-				if (metadataId != 0) {
-					metadataIdList.push(metadataId);
 				}
 			}
 		}
@@ -466,8 +373,6 @@ public class WorldLoader {
 					for (int y = 0; y < 16; y++) {
 						worldChunks[z*(renderDistance*2-1)*16 + x*16 + y] =
 								worldChunks[z*(renderDistance*2-1)*16 + (x+1)*16 + y];
-						worldMetadata[z*(renderDistance*2-1)*16 + x*16 + y] =
-								worldMetadata[z*(renderDistance*2-1)*16 + (x+1)*16 + y];
 					}
 				}
 			}
@@ -477,8 +382,6 @@ public class WorldLoader {
 					for (int y = 0; y < 16; y++) {
 						worldChunks[z*(renderDistance*2-1)*16 + x*16 + y] =
 								worldChunks[z*(renderDistance*2-1)*16 + (x-1)*16 + y];
-						worldMetadata[z*(renderDistance*2-1)*16 + x*16 + y] =
-								worldMetadata[z*(renderDistance*2-1)*16 + (x-1)*16 + y];
 					}
 				}
 			}
@@ -492,7 +395,6 @@ public class WorldLoader {
 			ExtendedBlockStorage[] storage = chunk.getBlockStorageArray();
 			for (int y = 0; y < 16; y++) {
 				worldChunks[z*(renderDistance*2-1)*16 + (positive ? renderDistance*2-2 : 0)*16 + y] = 0;
-				worldMetadata[z*(renderDistance*2-1)*16 + (positive ? renderDistance*2-2 : 0)*16 + y] = 0;
 				if (storage[y] != null) {
 					updateChunk(chunk);
 				}
@@ -510,10 +412,6 @@ public class WorldLoader {
 				if (chunkId != 0) {
 					chunkIdList.push(chunkId);
 				}
-				int metadataId = worldMetadata[(positive ? 0 : renderDistance*2-2)*(renderDistance*2-1)*16 + x*16 + y];
-				if (metadataId != 0) {
-					metadataIdList.push(metadataId);
-				}
 			}
 		}
 
@@ -524,8 +422,6 @@ public class WorldLoader {
 					for (int y = 0; y < 16; y++) {
 						worldChunks[z*(renderDistance*2-1)*16 + x*16 + y] =
 								worldChunks[(z+1)*(renderDistance*2-1)*16 + x*16 + y];
-						worldMetadata[z*(renderDistance*2-1)*16 + x*16 + y] =
-								worldMetadata[(z+1)*(renderDistance*2-1)*16 + x*16 + y];
 					}
 				}
 			}
@@ -535,8 +431,6 @@ public class WorldLoader {
 					for (int y = 0; y < 16; y++) {
 						worldChunks[z*(renderDistance*2-1)*16 + x*16 + y] =
 								worldChunks[(z-1)*(renderDistance*2-1)*16 + x*16 + y];
-						worldMetadata[z*(renderDistance*2-1)*16 + x*16 + y] =
-								worldMetadata[(z-1)*(renderDistance*2-1)*16 + x*16 + y];
 					}
 				}
 			}
@@ -550,7 +444,6 @@ public class WorldLoader {
 			ExtendedBlockStorage[] storage = chunk.getBlockStorageArray();
 			for (int y = 0; y < 16; y++) {
 				worldChunks[(positive ? renderDistance*2-2 : 0)*(renderDistance*2-1)*16 + x*16 + y] = 0;
-				worldMetadata[(positive ? renderDistance*2-2 : 0)*(renderDistance*2-1)*16 + x*16 + y] = 0;
 				if (storage[y] != null) {
 					updateChunk(chunk);
 				}

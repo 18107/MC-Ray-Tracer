@@ -3,6 +3,7 @@ package mod.id107.raytracer;
 import java.io.IOException;
 import java.nio.ByteBuffer;
 import java.nio.FloatBuffer;
+import java.nio.IntBuffer;
 
 import org.lwjgl.BufferUtils;
 import org.lwjgl.opengl.GL15;
@@ -11,6 +12,7 @@ import org.lwjgl.opengl.GL30;
 import org.lwjgl.opengl.GL43;
 
 import mod.id107.raytracer.chunk.MapUtil;
+import mod.id107.raytracer.chunk.Maps;
 
 public class Shader {
 
@@ -20,8 +22,7 @@ public class Shader {
 	private int vbo;
 	private int worldChunkSsbo;
 	private int chunkSsbo;
-	private int worldMetadataSsbo;
-	private int metadataSsbo;
+	private int idMapSsbo;
 	private int voxelDataSsbo;
 	private int textureDataSsbo;
 	
@@ -66,6 +67,9 @@ public class Shader {
 		GL15.glBufferData(GL15.GL_ARRAY_BUFFER, bb, GL15.GL_STATIC_DRAW);
 		GL15.glBindBuffer(GL15.GL_ARRAY_BUFFER, 0);
 		
+		Maps.loadMaps();
+		IntBuffer idMapBuffer = loadIdMap();
+		
 		//load voxels TODO move this to a better location
 		FloatBuffer voxelBuffer = loadVoxels();
 		
@@ -74,8 +78,7 @@ public class Shader {
 		
 		worldChunkSsbo = GL15.glGenBuffers();
 		chunkSsbo = GL15.glGenBuffers();
-		worldMetadataSsbo = GL15.glGenBuffers();
-		metadataSsbo = GL15.glGenBuffers();
+		idMapSsbo = GL15.glGenBuffers();
 		voxelDataSsbo = GL15.glGenBuffers();
 		textureDataSsbo = GL15.glGenBuffers();
 		
@@ -87,21 +90,17 @@ public class Shader {
 		GL15.glBufferData(GL43.GL_SHADER_STORAGE_BUFFER, 0, GL15.GL_DYNAMIC_DRAW);
 		GL30.glBindBufferBase(GL43.GL_SHADER_STORAGE_BUFFER, 3, chunkSsbo);
 		
-		GL15.glBindBuffer(GL43.GL_SHADER_STORAGE_BUFFER, worldMetadataSsbo);
-		GL15.glBufferData(GL43.GL_SHADER_STORAGE_BUFFER, 0, GL15.GL_DYNAMIC_DRAW);
-		GL30.glBindBufferBase(GL43.GL_SHADER_STORAGE_BUFFER, 4, worldMetadataSsbo);
-		
-		GL15.glBindBuffer(GL43.GL_SHADER_STORAGE_BUFFER, metadataSsbo);
-		GL15.glBufferData(GL43.GL_SHADER_STORAGE_BUFFER, 0, GL15.GL_DYNAMIC_DRAW);
-		GL30.glBindBufferBase(GL43.GL_SHADER_STORAGE_BUFFER, 5, metadataSsbo);
+		GL15.glBindBuffer(GL43.GL_SHADER_STORAGE_BUFFER, idMapSsbo);
+		GL15.glBufferData(GL43.GL_SHADER_STORAGE_BUFFER, idMapBuffer, GL15.GL_STATIC_DRAW);
+		GL30.glBindBufferBase(GL43.GL_SHADER_STORAGE_BUFFER, 4, idMapSsbo);
 		
 		GL15.glBindBuffer(GL43.GL_SHADER_STORAGE_BUFFER, voxelDataSsbo);
 		GL15.glBufferData(GL43.GL_SHADER_STORAGE_BUFFER, voxelBuffer, GL15.GL_STATIC_DRAW);
-		GL30.glBindBufferBase(GL43.GL_SHADER_STORAGE_BUFFER, 6, voxelDataSsbo);
+		GL30.glBindBufferBase(GL43.GL_SHADER_STORAGE_BUFFER, 5, voxelDataSsbo);
 		
 		GL15.glBindBuffer(GL43.GL_SHADER_STORAGE_BUFFER, textureDataSsbo);
 		GL15.glBufferData(GL43.GL_SHADER_STORAGE_BUFFER, textureBuffer, GL15.GL_STATIC_DRAW);
-		GL30.glBindBufferBase(GL43.GL_SHADER_STORAGE_BUFFER, 7, textureDataSsbo);
+		GL30.glBindBufferBase(GL43.GL_SHADER_STORAGE_BUFFER, 6, textureDataSsbo);
 		GL15.glBindBuffer(GL43.GL_SHADER_STORAGE_BUFFER, 0);
 	}
 	
@@ -156,6 +155,20 @@ public class Shader {
 		return textureBuffer;
 	}
 	
+	private IntBuffer loadIdMap() {
+		int[][][] map = Maps.getIdMap();
+		IntBuffer buffer = BufferUtils.createIntBuffer(map.length*6*3);
+		for (int[][] side : map) {
+			for (int[] data : side) {
+				for (int value : data) {
+					buffer.put(value);
+				}
+			}
+		}
+		buffer.flip();
+		return buffer;
+	}
+	
 	public void deleteShaderProgram() {
 		GL15.glDeleteBuffers(vbo);
 		vbo = 0;
@@ -163,10 +176,8 @@ public class Shader {
 		worldChunkSsbo = 0;
 		GL15.glDeleteBuffers(chunkSsbo);
 		chunkSsbo = 0;
-		GL15.glDeleteBuffers(worldMetadataSsbo);
-		worldMetadataSsbo = 0;
-		GL15.glDeleteBuffers(metadataSsbo);
-		metadataSsbo = 0;
+		GL15.glDeleteBuffers(idMapSsbo);
+		idMapSsbo = 0;
 		GL15.glDeleteBuffers(voxelDataSsbo);
 		voxelDataSsbo = 0;
 		GL15.glDeleteBuffers(textureDataSsbo);
@@ -191,12 +202,8 @@ public class Shader {
 		return chunkSsbo;
 	}
 	
-	public int getWorldMetadataSsbo() {
-		return worldMetadataSsbo;
-	}
-	
-	public int getMetadataSsbo() {
-		return metadataSsbo;
+	public int getIdMapSsbo() {
+		return idMapSsbo;
 	}
 	
 	public int getVoxelDataSsbo() {

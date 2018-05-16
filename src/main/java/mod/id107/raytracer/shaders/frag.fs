@@ -10,13 +10,15 @@
 
 #define TEXTURE_RESOLUTION 16
 
-const mat4 rotation[6] = mat4[](
+const mat4 rotation[8] = mat4[](
   mat4(1,0,0,0, 0,1,0,0, 0,0,1,0, 0,0,0,1),
   mat4(0,0,-1,0, 0,1,0,0, 1,0,0,0, 0,0,1,1),
   mat4(-1,0,0,0, 0,1,0,0, 0,0,-1,0, 1,0,1,1),
   mat4(0,0,1,0, 0,1,0,0, -1,0,0,0, 1,0,0,1),
   mat4(1,0,0,0, 0,0,1,0, 0,-1,0,0, 0,1,0,1),
-  mat4(1,0,0,0, 0,0,-1,0, 0,1,0,0, 0,0,1,1)
+  mat4(1,0,0,0, 0,0,-1,0, 0,1,0,0, 0,0,1,1),
+  mat4(0,1,0,0, -1,0,0,0, 0,0,1,0, 1,0,0,1),
+  mat4(0,-1,0,0, 1,0,0,0, 0,0,1,0, 0,1,0,1)
 );
 
 in vec2 texcoord;
@@ -234,11 +236,225 @@ bool setupTraceBlock(int id, vec3 nearestCube, vec3 inc, ivec3 iinc, ivec3 curre
   return traceBlock(id, nearestVoxel, currentVoxel, rotate, inc/TEXTURE_RESOLUTION, iinc);
 }
 
-bool drawTexture(int blockId, int blockRotation, int side, float xIn, float yIn, int light) {
+bool drawTexture(int blockId, int blockRotation, int side, float texX, float texY, int light) {
+  float temp;
+  switch (blockRotation) {
+  case 1:
+    switch (side) {
+    case 0:
+      side = 5;
+      break;
+    case 1:
+      side = 4;
+      break;
+    case 2:
+      temp = texX;
+      texX = 1 - texY;
+      texY = temp;
+      break;
+    case 3:
+      temp = texX;
+      texX = texY;
+      texY = 1 - temp;
+      break;
+    case 4:
+      side = 0;
+      break;
+    case 5:
+      side = 1;
+      break;
+    }
+    break;
+  case 2:
+    switch (side) {
+    case 0:
+      side = 1;
+      break;
+    case 1:
+      side = 0;
+      break;
+    case 2:
+    case 3:
+      texX = 1 - texX;
+      texY = 1 - texY;
+      break;
+    case 4:
+      side = 5;
+      break;
+    case 5:
+      side = 4;
+      break;
+    }
+    break;
+  case 3:
+    switch (side) {
+    case 0:
+      side = 4;
+      break;
+    case 1:
+      side = 5;
+      break;
+    case 2:
+      temp = texX;
+      texX = texY;
+      texY = 1 - temp;
+      break;
+    case 3:
+      temp = texX;
+      texX = 1 - texY;
+      texY = temp;
+      break;
+    case 4:
+      side = 1;
+      break;
+    case 5:
+      side = 0;
+      break;
+    }
+    break;
+  case 4:
+    switch (side) {
+    case 0:
+      temp = texX;
+      texX = texY;
+      texY = 1 - temp;
+      break;
+    case 1:
+      temp = texX;
+      texX = 1 - texY;
+      texY = temp;
+      break;
+    case 2:
+      side = 4;
+      temp = texX;
+      texX = 1 - texY;
+      texY = 1 - temp;
+      break;
+    case 3:
+      side = 5;
+      temp = texX;
+      texX = texY;
+      texY = temp;
+      break;
+    case 4:
+      side = 3;
+      temp = texX;
+      texX = 1 - texY;
+      texY = 1 - temp;
+      break;
+    case 5:
+      side = 2;
+      temp = texX;
+      texX = texY;
+      texY = temp;
+      break;
+    }
+    break;
+  case 5:
+    switch (side) {
+    case 0:
+      temp = texX;
+      texX = 1 - texY;
+      texY = temp;
+      break;
+    case 1:
+      temp = texX;
+      texX = texY;
+      texY = 1 - temp;
+      break;
+    case 2:
+      side = 5;
+      temp = texX;
+      texX = texY;
+      texY = temp;
+      break;
+    case 3:
+      side = 4;
+      temp = texX;
+      texX = 1 - texY;
+      texY = 1 - temp;
+      break;
+    case 4:
+      side = 2;
+      temp = texX;
+      texX = 1 - texY;
+      texY = 1 - temp;
+      break;
+    case 5:
+      side = 3;
+      temp = texX;
+      texX = texY;
+      texY = temp;
+      break;
+    }
+    break;
+  case 6:
+    switch (side) {
+    case 0:
+      side = 2;
+      texY = 1 - texY;
+      break;
+    case 1:
+      side = 3;
+      texY = 1 - texY;
+      break;
+    case 2:
+      side = 1;
+      texX = 1 - texX;
+      break;
+    case 3:
+      side = 0;
+      texX = 1 - texX;
+      break;
+    case 4:
+      temp = texX;
+      texX = texY;
+      texY = 1 - temp;
+      break;
+    case 5:
+      temp = texX;
+      texX = 1 - texY;
+      texY = temp;
+      break;
+    }
+    break;
+  case 7:
+    switch (side) {
+    case 0:
+      side = 3;
+      texX = 1 - texX;
+      break;
+    case 1:
+      side = 2;
+      texX = 1 - texX;
+      break;
+    case 2:
+      side = 0;
+      texX = texX;
+      texY = 1 - texY;
+      break;
+    case 3:
+      side = 1;
+      texX = texX;
+      texY = 1 - texY;
+      break;
+    case 4:
+      temp = texX;
+      texX = 1 - texY;
+      texY = temp;
+      break;
+    case 5:
+      temp = texX;
+      texX = texY;
+      texY = 1 - temp;
+      break;
+    }
+    break;
+  }
   int texId = idData[blockId*6*3 + side*3 + 1];
   color = textureColor[texId*TEXTURE_RESOLUTION*TEXTURE_RESOLUTION +
-    int(floor(yIn*TEXTURE_RESOLUTION))*TEXTURE_RESOLUTION +
-    int(floor(xIn*TEXTURE_RESOLUTION))] *
+    int(floor(texY*TEXTURE_RESOLUTION))*TEXTURE_RESOLUTION +
+    int(floor(texX*TEXTURE_RESOLUTION))] *
     vec4((light+1)/16.0, (light+1)/16.0, (light+1)/16.0, 1);
   if (color.a == 0) {
     return false;
@@ -398,8 +614,8 @@ bool setupDrawBlock(int blockId, int blockRotation, ivec3 current, ivec3 last,
     texX = (iinc.x+1)/2 - distanceX*iinc.x;
     if (current.z > last.z) {
       side = 5;
-    } else {
       texX = 1-texX;
+    } else {
       side = 4;
     }
   }
@@ -408,7 +624,7 @@ bool setupDrawBlock(int blockId, int blockRotation, ivec3 current, ivec3 last,
   if (isVoxel) {
     int voxId = idData[blockId*6*3 + side*3 + 1];
     int rotate = idData[blockId*6*3 + side*3 + 2];
-    return setupTraceBlock(voxId, nearestCube, inc, iinc, current, last, rotation[rotate]);
+    return setupTraceBlock(voxId, nearestCube, inc, iinc, current, last, rotation[blockRotation]*rotation[rotate]);
   } else {
     return drawTexture(blockId, blockRotation, side, texX, texY, /*light*/ 15);
   }

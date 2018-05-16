@@ -49,7 +49,7 @@ public class MapUtil {
 		}
 	}
 	
-	private static int nextVoxel(String name) {
+	public static int nextVoxel(String name) {
 		Integer id = voxels.get(name);
 		if (id == null) {
 			voxels.put(name, ++voxelIndex);
@@ -95,7 +95,7 @@ public class MapUtil {
 		return new int[][] {{1,id[0],rotation[0]}, {1,id[1],rotation[1]}, {1,id[1],rotation[2]}, {1,id[1],rotation[3]}, {1,id[1],rotation[4]}, {0,id[1],rotation[5]}};
 	}
 	
-	private static int nextTexture(String name) {
+	public static int nextTexture(String name) {
 		Integer id = textures.get(name);
 		if (id == null) {
 			textures.put(name, ++textureIndex);

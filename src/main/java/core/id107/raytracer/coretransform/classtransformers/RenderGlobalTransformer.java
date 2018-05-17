@@ -1,5 +1,13 @@
 package core.id107.raytracer.coretransform.classtransformers;
 
+import static org.objectweb.asm.Opcodes.GETSTATIC;
+import static org.objectweb.asm.Opcodes.ICONST_0;
+import static org.objectweb.asm.Opcodes.IFEQ;
+import static org.objectweb.asm.Opcodes.IRETURN;
+import static org.objectweb.asm.Opcodes.NOP;
+import static org.objectweb.asm.Opcodes.RETURN;
+
+import org.objectweb.asm.Type;
 import org.objectweb.asm.tree.ClassNode;
 import org.objectweb.asm.tree.FieldInsnNode;
 import org.objectweb.asm.tree.InsnList;
@@ -9,23 +17,10 @@ import org.objectweb.asm.tree.LabelNode;
 import org.objectweb.asm.tree.MethodNode;
 
 import core.id107.raytracer.coretransform.CLTLog;
-import core.id107.raytracer.coretransform.CoreLoader;
 import core.id107.raytracer.coretransform.classtransformers.name.ClassName;
 import core.id107.raytracer.coretransform.classtransformers.name.MethodName;
 import core.id107.raytracer.coretransform.classtransformers.name.Names;
-
-import org.objectweb.asm.Type;
-
 import mod.id107.raytracer.RenderUtil;
-import net.minecraft.client.renderer.Tessellator;
-import net.minecraft.client.renderer.VertexBuffer;
-import net.minecraft.client.renderer.culling.ICamera;
-import net.minecraft.entity.Entity;
-import net.minecraft.entity.player.EntityPlayer;
-import net.minecraft.util.BlockRenderLayer;
-import net.minecraft.util.math.RayTraceResult;
-
-import static org.objectweb.asm.Opcodes.*;
 
 public class RenderGlobalTransformer extends ClassTransformer {
 
@@ -50,7 +45,7 @@ public class RenderGlobalTransformer extends ClassTransformer {
 			public void transform(ClassNode classNode, MethodNode method, boolean obfuscated) {
 				CLTLog.info("Found method: " + method.name + " " + method.desc);
 				
-				method.instructions.insert(skipMethod(RETURN, NOP));
+				//method.instructions.insert(skipMethod(RETURN, NOP)); FIXME renderManager.options==null, renderManager.cacheActiveRenderInfo(
 			}
 		};
 		

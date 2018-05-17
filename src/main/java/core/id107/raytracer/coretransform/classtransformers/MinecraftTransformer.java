@@ -11,7 +11,6 @@ import org.objectweb.asm.tree.MethodNode;
 import org.objectweb.asm.tree.VarInsnNode;
 
 import core.id107.raytracer.coretransform.CLTLog;
-import core.id107.raytracer.coretransform.CoreLoader;
 import core.id107.raytracer.coretransform.TransformerUtil;
 import core.id107.raytracer.coretransform.classtransformers.name.ClassName;
 import core.id107.raytracer.coretransform.classtransformers.name.MethodName;
@@ -34,7 +33,7 @@ public class MinecraftTransformer extends ClassTransformer {
 			
 			public void transform(ClassNode classNode, MethodNode method, boolean obfuscated) {
 				CLTLog.info("Found method: " + method.name + " " + method.desc);
-				CLTLog.info("begining at start of method " + getMethodName());
+				CLTLog.info("begining at start of method " + getMethodName().debug());
 				
 				//TransformerUtil.onWorldLoad(WorldClient worldClientIn)
 				InsnList toInsert = new InsnList();

@@ -16,7 +16,7 @@ public abstract class ClassTransformer {
 	
 	static {
 		//Put all of the class transformers here
-		transformers = new ClassTransformer[] {new MinecraftTransformer(), new StitcherTransformer(), new EntityRendererTransformer(), new ChunkTransformer(), new RenderGlobalTransformer()};
+		transformers = new ClassTransformer[] {new MinecraftTransformer(), new ChunkTransformer(), new RenderGlobalTransformer()};
 	}
 	
 	/**

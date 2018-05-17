@@ -336,13 +336,13 @@ public class WorldLoader {
 			for (int z = 0; z < 16; z++) {
 				for (int x = 0; x < 16; x++) {
 					IBlockState state = storage.get(x, y, z);
-					int stateId = map.get(state); //TODO
+					int stateId = map.get(state);
 					int oldId = Block.getStateId(state);
 					int[] newId = Maps.getBlock(oldId);
-					data[y*16*16*4 + z*16*4 + x*4] = newId[0];
-					data[y*16*16*4 + z*16*4 + x*4 + 1] = newId[1];
+					data[y*16*16*4 + z*16*4 + x*4] = newId[0]; //blockId
+					data[y*16*16*4 + z*16*4 + x*4 + 1] = newId[1]; //rotation
 					data[y*16*16*4 + z*16*4 + x*4 + 2] = storage.getBlocklightArray().get(x, y, z);
-					data[y*16*16*4 + z*16*4 + x*4 + 3] = 0;
+					data[y*16*16*4 + z*16*4 + x*4 + 3] = 0; //unused
 				}
 			}
 		}

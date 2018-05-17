@@ -11,7 +11,6 @@ import org.lwjgl.opengl.GL20;
 import org.lwjgl.opengl.GL30;
 import org.lwjgl.opengl.GL43;
 
-import mod.id107.raytracer.chunk.MapUtil;
 import mod.id107.raytracer.chunk.Maps;
 
 public class Shader {
@@ -122,7 +121,7 @@ public class Shader {
 	/**Loads all of the voxel grids into a {@link FloatBuffer}
 	 * @return the flipped buffer*/
 	private FloatBuffer loadVoxels() {
-		String[] voxels = MapUtil.getAllVoxels();
+		String[] voxels = Maps.getAllVoxels();
 		FloatBuffer voxelBuffer = BufferUtils.createFloatBuffer(16*16*16*4*voxels.length);
 		int[] data;
 		try {
@@ -142,7 +141,7 @@ public class Shader {
 	/**Loads all of the textures into a {@link FloatBuffer}
 	 * @return the flipped buffer*/
 	private FloatBuffer loadTextures() {
-		String[] textures = MapUtil.getAllTextures();
+		String[] textures = Maps.getAllTextures();
 		FloatBuffer textureBuffer = BufferUtils.createFloatBuffer(16*16*4*textures.length);
 		int[] data;
 		for (String texture : textures) {

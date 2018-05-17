@@ -54,16 +54,6 @@ layout(std430, binding = 3) buffer chunk
   BlockData blockData[];
 };
 
-layout(std430, binding = 4) buffer worldMetadata //TODO remove
-{
-  int metaLocation[];
-};
-
-layout(std430, binding = 5) buffer metadata //TODO remove
-{
-  int blockMetadata[];
-};
-
 layout(std430, binding = 4) buffer iddata
 {
   int idData[];

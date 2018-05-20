@@ -60,7 +60,7 @@ public class Reader {
 		}
 		is.read(data);
 		if (!Arrays.equals(data, new byte[] {0,0,0,0})) {
-			//throw new IOException(String.format("%s Axis must be left handed", fileName));
+			throw new IOException(String.format("%s Axis must be left handed", fileName));
 		}
 		is.read(data);
 		if (!Arrays.equals(data, new byte[] {0,0,0,0})) {

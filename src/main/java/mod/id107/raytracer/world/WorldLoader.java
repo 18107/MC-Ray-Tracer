@@ -337,6 +337,27 @@ public class WorldLoader {
 					IBlockState state = storage[height].get(x, y, z);
 					int oldId = Block.getStateId(state);
 					int[] newId = Maps.getBlock(oldId);
+					if ((oldId & 0xFFF) == 64) { //if wooden door
+						if ((oldId >> 12) >= 8) { //if upper
+							int upper = oldId >> 12;
+							int lower;
+							if (y == 0) {
+								lower = Block.getStateId(storage[height-1].get(x, 15, z)) >> 12;
+							} else {
+								lower = Block.getStateId(storage[height].get(x, y-1, z)) >> 12;
+							}
+							newId[1] = Maps.getDoorRotation(lower, upper);
+						} else {
+							int lower = oldId >> 12;
+							int upper;
+							if (y == 15) {
+								upper = Block.getStateId(storage[height+1].get(x, 0, z)) >> 12;
+							} else {
+								upper = Block.getStateId(storage[height].get(x, y+1, z)) >> 12;
+							}
+							newId[1] = Maps.getDoorRotation(lower, upper);
+						}
+					}
 					data[y*16*16*4 + z*16*4 + x*4] = newId[0]; //blockId
 					data[y*16*16*4 + z*16*4 + x*4 + 1] = newId[1]; //rotation
 					data[y*16*16*4 + z*16*4 + x*4 + 2] = storage[height].getBlocklightArray().get(x, y, z);

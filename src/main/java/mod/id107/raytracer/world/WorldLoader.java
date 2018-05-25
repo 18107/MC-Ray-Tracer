@@ -337,7 +337,7 @@ public class WorldLoader {
 					IBlockState state = storage[height].get(x, y, z);
 					int oldId = Block.getStateId(state);
 					int[] newId = Maps.getBlock(oldId);
-					if ((oldId & 0xFFF) == 64) { //if wooden door
+					if ((oldId & 0xFFF) == 64 || (oldId & 0xFFF) == 71) { //if wooden door
 						if ((oldId >> 12) >= 8) { //if upper
 							int upper = oldId >> 12;
 							int lower;

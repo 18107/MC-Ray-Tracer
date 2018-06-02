@@ -2,6 +2,7 @@
 
 Hardcoded matricies
 	column major order
+	//FIXME
 	0: (1,0,0,0, 0,1,0,0, 0,0,1,0, 0,0,0,1)   z ->  z, x ->  x  no rotation    south
 	1: (0,0,-1,0, 0,1,0,0, 1,0,0,0, 0,0,1,1)  z ->  x, x -> -z  clockwise      west
 	2: (-1,0,0,0, 0,1,0,0, 0,0,-1,0, 1,0,1,1) z -> -z, x -> -x  180 degrees    north
@@ -45,3 +46,7 @@ Voxel grid
 
 qb file format: http://minddesk.com/learn/article.php?id=22
     last accessed 2018-05-11T10:24:33
+
+Temp:
+    tree color #50C60B
+    grass color #91BD59

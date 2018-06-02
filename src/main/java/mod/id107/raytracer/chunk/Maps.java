@@ -33,18 +33,6 @@ public class Maps {
 		}
 	}
 	
-	//TODO remove below
-	/*Gson gson = new Gson();
-	Map<Integer, int[]> map = new HashMap<Integer, int[]>();
-	map.put(5, new int[] {5, UP});
-	map.put(3, new int[] {3, 6});
-	map.put(4+(3<<12), new int[] {8, 16});
-	String string = gson.toJson(map);
-	Log.info(string);
-	Map<Integer, int[]> map2 = gson.fromJson("{\"3\":[1,2],\"1\":[7,8]}", new TypeToken<Map<Integer, int[]>>(){}.getType());
-	Log.info(map2.get(1)[0]);*/
-	//TODO remove above
-	
 	//blockStateId = block.getIdFromBlock(block) + (block.getMetaFromState(state) << 12)
 	public static void loadMaps() {
 		chunkMap = new HashMap<Integer, int[]>();
@@ -157,8 +145,8 @@ public class Maps {
 		chunkMap.put(20, new int[] {mapUtil.newBlock("glass"), NONE});
 		chunkMap.put(21, new int[] {mapUtil.newBlock("lapis ore"), NONE});
 		chunkMap.put(22, new int[] {mapUtil.newBlock("lapis block"), NONE});
-		chunkMap.put(23, new int[] {mapUtil.newBlock("dispenser vertical"), DOWN}); //TODO
-		chunkMap.put(23 + (1<<12), new int[] {mapUtil.getBlock("dispenser vertical"), UP}); //TODO
+		chunkMap.put(23, new int[] {mapUtil.newBlock("dispenser vertical"), DOWN});
+		chunkMap.put(23 + (1<<12), new int[] {mapUtil.getBlock("dispenser vertical"), UP});
 		chunkMap.put(23 + (2<<12), new int[] {mapUtil.newBlock("dispenser horizontal"), NORTH});
 		chunkMap.put(23 + (3<<12), new int[] {mapUtil.getBlock("dispenser horizontal"), NONE});
 		chunkMap.put(23 + (4<<12), new int[] {mapUtil.getBlock("dispenser horizontal"), WEST});
@@ -329,7 +317,15 @@ public class Maps {
 		chunkMap.put(56, new int[] {mapUtil.newBlock("diamond ore"), NONE});
 		chunkMap.put(57, new int[] {mapUtil.newBlock("diamond block"), NONE});
 		chunkMap.put(58, new int[] {mapUtil.newBlock("crafting table"), NONE});
-		//TODO wheat, farmland
+		//TODO wheat
+		chunkMap.put(60, new int[] {mapUtil.newBlock("farmland dry"), NONE});
+		chunkMap.put(60 + (1<<12), new int[] {mapUtil.getBlock("farmland dry"), NONE});
+		chunkMap.put(60 + (2<<12), new int[] {mapUtil.getBlock("farmland dry"), NONE});
+		chunkMap.put(60 + (3<<12), new int[] {mapUtil.getBlock("farmland dry"), NONE});
+		chunkMap.put(60 + (4<<12), new int[] {mapUtil.getBlock("farmland dry"), NONE});
+		chunkMap.put(60 + (5<<12), new int[] {mapUtil.getBlock("farmland dry"), NONE});
+		chunkMap.put(60 + (6<<12), new int[] {mapUtil.getBlock("farmland dry"), NONE});
+		chunkMap.put(60 + (7<<12), new int[] {mapUtil.newBlock("farmland wet"), NONE});
 		chunkMap.put(61 + (2<<12), new int[] {mapUtil.newBlock("furnace"), NORTH});
 		chunkMap.put(61 + (3<<12), new int[] {mapUtil.getBlock("furnace"), NONE});
 		chunkMap.put(61 + (4<<12), new int[] {mapUtil.getBlock("furnace"), WEST});
@@ -374,7 +370,10 @@ public class Maps {
 		chunkMap.put(67 + (5<<12), new int[] {mapUtil.getBlock("cobblestone stairs top"), EAST});
 		chunkMap.put(67 + (6<<12), new int[] {mapUtil.getBlock("cobblestone stairs top"), NORTH});
 		chunkMap.put(67 + (7<<12), new int[] {mapUtil.getBlock("cobblestone stairs top"), NONE});
-		//TODO sign
+		chunkMap.put(68 + (2<<12), new int[] {mapUtil.newBlock("wall sign"), NORTH});
+		chunkMap.put(68 + (3<<12), new int[] {mapUtil.getBlock("wall sign"), NONE});
+		chunkMap.put(68 + (4<<12), new int[] {mapUtil.getBlock("wall sign"), WEST});
+		chunkMap.put(68 + (5<<12), new int[] {mapUtil.getBlock("wall sign"), EAST});
 		chunkMap.put(69, new int[] {mapUtil.newBlock("lever off"), DOWN|RIGHT});
 		chunkMap.put(69 + (1<<12), new int[] {mapUtil.getBlock("lever off"), EAST});
 		chunkMap.put(69 + (2<<12), new int[] {mapUtil.getBlock("lever off"), WEST});
@@ -590,6 +589,38 @@ public class Maps {
 		chunkMap.put(122, new int[] {mapUtil.newBlock("dragon egg"), NONE});
 		chunkMap.put(123, new int[] {mapUtil.newBlock("redstone lamp off"), NONE});
 		chunkMap.put(124, new int[] {mapUtil.newBlock("redstone lamp on"), NONE});
+		chunkMap.put(125, new int[] {mapUtil.getBlock("oak wood planks"), NONE});
+		chunkMap.put(125 + (1<<12), new int[] {mapUtil.getBlock("spruce wood planks"), NONE});
+		chunkMap.put(125 + (2<<12), new int[] {mapUtil.getBlock("birch wood planks"), NONE});
+		chunkMap.put(125 + (3<<12), new int[] {mapUtil.getBlock("jungle wood planks"), NONE});
+		chunkMap.put(125 + (4<<12), new int[] {mapUtil.getBlock("acacia wood planks"), NONE});
+		chunkMap.put(125 + (5<<12), new int[] {mapUtil.getBlock("dark oak wood planks"), NONE});
+		//TODO wooden slab
+		chunkMap.put(127, new int[] {mapUtil.newBlock("cocoa stage 0"), NONE});
+		chunkMap.put(127 + (1<<12), new int[] {mapUtil.getBlock("cocoa stage 0"), WEST});
+		chunkMap.put(127 + (2<<12), new int[] {mapUtil.getBlock("cocoa stage 0"), NORTH});
+		chunkMap.put(127 + (3<<12), new int[] {mapUtil.getBlock("cocoa stage 0"), EAST});
+		chunkMap.put(127 + (4<<12), new int[] {mapUtil.newBlock("cocoa stage 1"), NONE});
+		chunkMap.put(127 + (5<<12), new int[] {mapUtil.getBlock("cocoa stage 1"), WEST});
+		chunkMap.put(127 + (6<<12), new int[] {mapUtil.getBlock("cocoa stage 1"), NORTH});
+		chunkMap.put(127 + (7<<12), new int[] {mapUtil.getBlock("cocoa stage 1"), EAST});
+		chunkMap.put(127 + (8<<12), new int[] {mapUtil.newBlock("cocoa stage 2"), NONE});
+		chunkMap.put(127 + (9<<12), new int[] {mapUtil.getBlock("cocoa stage 2"), WEST});
+		chunkMap.put(127 + (10<<12), new int[] {mapUtil.getBlock("cocoa stage 2"), NORTH});
+		chunkMap.put(127 + (11<<12), new int[] {mapUtil.getBlock("cocoa stage 2"), EAST});
+		chunkMap.put(128, new int[] {mapUtil.newBlock("sandstone stairs bottom"), WEST});
+		chunkMap.put(128 + (1<<12), new int[] {mapUtil.getBlock("sandstone stairs bottom"), EAST});
+		chunkMap.put(128 + (2<<12), new int[] {mapUtil.getBlock("sandstone stairs bottom"), NORTH});
+		chunkMap.put(128 + (3<<12), new int[] {mapUtil.getBlock("sandstone stairs bottom"), NONE});
+		chunkMap.put(128 + (4<<12), new int[] {mapUtil.newBlock("sandstone stairs top"), WEST});
+		chunkMap.put(128 + (5<<12), new int[] {mapUtil.getBlock("sandstone stairs top"), EAST});
+		chunkMap.put(128 + (6<<12), new int[] {mapUtil.getBlock("sandstone stairs top"), NORTH});
+		chunkMap.put(128 + (7<<12), new int[] {mapUtil.getBlock("sandstone stairs top"), NONE});
+		chunkMap.put(129, new int[] {mapUtil.newBlock("emerald ore"), NONE});
+		//TODO enderchest, tripwire hook, tripwire
+		chunkMap.put(133, new int[] {mapUtil.newBlock("emerald block"), NONE});
+		//TODO wood stairs, command block
+		chunkMap.put(138, new int[] {mapUtil.newBlock("beacon"), NONE});
 		
 		idMap = new int[mapUtil.getAllBlocks().length][][];
 		idMap[mapUtil.getBlock("air")] = mapUtil.nextVoxel("error", 0); //will not be rendered
@@ -601,7 +632,12 @@ public class Maps {
 		idMap[mapUtil.getBlock("polished diorite")] = mapUtil.nextTexture("stone_diorite_smooth", 0);
 		idMap[mapUtil.getBlock("andesite")] = mapUtil.nextTexture("stone_andesite", 0);
 		idMap[mapUtil.getBlock("polished andesite")] = mapUtil.nextTexture("stone_andesite_smooth", 0);
-		idMap[mapUtil.getBlock("grass")] = mapUtil.nextTexture(new String[] {"grass_side", "grass_side", "grass_top", "dirt", "grass_side", "grass_side"}, 0);
+		//FIXME
+		//idMap[mapUtil.getBlock("grass")] = mapUtil.nextTexture(new String[] {"grass_side", "grass_side", "grass_top", "dirt", "grass_side", "grass_side"}, 0);
+		int grassSide = mapUtil.nextTexture("grass_side");
+		int dirt = mapUtil.nextTexture("dirt");
+		int grassTop = mapUtil.nextVoxel("grass_top");
+		idMap[mapUtil.getBlock("grass")] = new int[][] {{0,grassSide,0}, {0,grassSide,0}, {1,grassTop,0}, {0,dirt,0}, {0,grassSide,0}, {0,grassSide,0}};
 		idMap[mapUtil.getBlock("dirt")] = mapUtil.nextTexture("dirt", 0);
 		idMap[mapUtil.getBlock("coarse dirt")] = mapUtil.nextTexture("coarse_dirt", 0);
 		idMap[mapUtil.getBlock("podzol")] = mapUtil.nextTexture(new String[] {"dirt_podzol_side", "dirt_podzol_side", "dirt_podzol_top", "dirt", "dirt_podzol_side", "dirt_podzol_side"}, 0);
@@ -649,10 +685,10 @@ public class Maps {
 		idMap[mapUtil.getBlock("spruce bark")] = mapUtil.nextTexture("log_spruce", 0);
 		idMap[mapUtil.getBlock("birch bark")] = mapUtil.nextTexture("log_birch", 0);
 		idMap[mapUtil.getBlock("jungle bark")] = mapUtil.nextTexture("log_jungle", 0);
-		idMap[mapUtil.getBlock("oak leaves")] = mapUtil.nextTexture("leaves_oak", 0);
-		idMap[mapUtil.getBlock("spruce leaves")] = mapUtil.nextTexture("leaves_spruce", 0);
-		idMap[mapUtil.getBlock("birch leaves")] = mapUtil.nextTexture("leaves_birch", 0);
-		idMap[mapUtil.getBlock("jungle leaves")] = mapUtil.nextTexture("leaves_jungle", 0);
+		idMap[mapUtil.getBlock("oak leaves")] = mapUtil.nextVoxel("leaves_oak", 0);
+		idMap[mapUtil.getBlock("spruce leaves")] = mapUtil.nextVoxel("leaves_spruce", 0);
+		idMap[mapUtil.getBlock("birch leaves")] = mapUtil.nextVoxel("leaves_birch", 0);
+		idMap[mapUtil.getBlock("jungle leaves")] = mapUtil.nextVoxel("leaves_jungle", 0);
 		idMap[mapUtil.getBlock("sponge")] = mapUtil.nextTexture("sponge", 0);
 		idMap[mapUtil.getBlock("wet sponge")] = mapUtil.nextTexture("sponge_wet", 0);
 		idMap[mapUtil.getBlock("glass")] = mapUtil.nextTexture("glass", 0);
@@ -723,9 +759,9 @@ public class Maps {
 		idMap[mapUtil.getBlock("smooth double sandstone slab")] = mapUtil.nextTexture("sandstone_top", 0);
 		idMap[mapUtil.getBlock("smooth quartz slab")] = mapUtil.nextTexture("quartz_block_top", 0);
 		idMap[mapUtil.getBlock("tnt")] = mapUtil.nextTexture(new String[] {"tnt_side", "tnt_side", "tnt_top", "tnt_bottom", "tnt_side", "tnt_side"}, 0);
-		int b = mapUtil.nextVoxel("bookshelf");
-		int p = mapUtil.nextTexture("planks_oak");
-		idMap[mapUtil.getBlock("bookshelf")] = new int[][] {{1,b,EAST}, {1,b,WEST}, {0,p,0}, {0,p,0}, {1,b,NONE}, {1,b,NORTH}};
+		int bookshelf = mapUtil.nextVoxel("bookshelf");
+		int planksOak = mapUtil.nextTexture("planks_oak");
+		idMap[mapUtil.getBlock("bookshelf")] = new int[][] {{1,bookshelf,EAST}, {1,bookshelf,WEST}, {0,planksOak,0}, {0,planksOak,0}, {1,bookshelf,NONE}, {1,bookshelf,NORTH}};
 		idMap[mapUtil.getBlock("mossy cobblestone")] = mapUtil.nextTexture("cobblestone_mossy", 0);
 		idMap[mapUtil.getBlock("obsidian")] = mapUtil.nextTexture("obsidian", 0);
 		idMap[mapUtil.getBlock("torch wall")] = mapUtil.nextVoxel("torch_wall", 0);
@@ -737,6 +773,8 @@ public class Maps {
 		idMap[mapUtil.getBlock("diamond ore")] = mapUtil.nextTexture("diamond_ore", 0);
 		idMap[mapUtil.getBlock("diamond block")] = mapUtil.nextTexture("diamond_block", 0);
 		idMap[mapUtil.getBlock("crafting table")] = mapUtil.nextVoxel("crafting_table", 0);
+		idMap[mapUtil.getBlock("farmland dry")] = mapUtil.nextVoxel("farmland_dry", 0);
+		idMap[mapUtil.getBlock("farmland wet")] = mapUtil.nextVoxel("farmland_wet", 0);
 		idMap[mapUtil.getBlock("furnace")] = mapUtil.nextVoxel("furnace", 0);
 		idMap[mapUtil.getBlock("furnace on")] = mapUtil.nextVoxel("furnace_on", 0);
 		idMap[mapUtil.getBlock("oak door lower")] = mapUtil.nextVoxel("door_oak_lower", 0);
@@ -747,6 +785,7 @@ public class Maps {
 		idMap[mapUtil.getBlock("rail curved")] = mapUtil.nextVoxel("rail_normal_turned", 0);
 		idMap[mapUtil.getBlock("cobblestone stairs bottom")] = mapUtil.nextVoxel("stairs_bottom_cobblestone", 0);
 		idMap[mapUtil.getBlock("cobblestone stairs top")] = mapUtil.nextVoxel("stairs_top_cobblestone", 0);
+		idMap[mapUtil.getBlock("wall sign")] = mapUtil.nextVoxel("sign_wall", 0);
 		idMap[mapUtil.getBlock("lever off")] = mapUtil.nextVoxel("lever_off", 0);
 		idMap[mapUtil.getBlock("lever on")] = mapUtil.nextVoxel("lever_on", 0);
 		idMap[mapUtil.getBlock("stone pressure plate")] = mapUtil.nextVoxel("pressure_plate_stone", 0);
@@ -865,6 +904,14 @@ public class Maps {
 		idMap[mapUtil.getBlock("dragon egg")] = mapUtil.nextVoxel("dragon_egg", 0);
 		idMap[mapUtil.getBlock("redstone lamp off")] = mapUtil.nextTexture("redstone_lamp_off", 0);
 		idMap[mapUtil.getBlock("redstone lamp on")] = mapUtil.nextTexture("redstone_lamp_on", 0);
+		idMap[mapUtil.getBlock("cocoa stage 0")] = mapUtil.nextVoxel("cocoa_0", 0);
+		idMap[mapUtil.getBlock("cocoa stage 1")] = mapUtil.nextVoxel("cocoa_1", 0);
+		idMap[mapUtil.getBlock("cocoa stage 2")] = mapUtil.nextVoxel("cocoa_2", 0);
+		idMap[mapUtil.getBlock("sandstone stairs bottom")] = mapUtil.nextVoxel("stairs_bottom_sandstone", 0);
+		idMap[mapUtil.getBlock("sandstone stairs top")] = mapUtil.nextVoxel("stairs_top_sandstone", 0);
+		idMap[mapUtil.getBlock("emerald ore")] = mapUtil.nextTexture("emerald_ore", 0);
+		idMap[mapUtil.getBlock("emerald block")] = mapUtil.nextTexture("emerald_block", 0);
+		idMap[mapUtil.getBlock("beacon")] = mapUtil.nextVoxel("beacon", 0);
 	}
 	
 	public static int getDoorRotation(int lowerMetadata, int upperMetadata) {

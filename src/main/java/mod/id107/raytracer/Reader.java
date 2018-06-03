@@ -59,8 +59,8 @@ public class Reader {
 			throw new IOException(String.format("%s Color must be RGBA, not BGRA", fileName));
 		}
 		is.read(data);
-		if (!Arrays.equals(data, new byte[] {1,0,0,0})) {
-			throw new IOException(String.format("%s Axis must be right handed", fileName));
+		if (!Arrays.equals(data, new byte[] {0,0,0,0})) {
+			throw new IOException(String.format("%s Axis must be left handed", fileName));
 		}
 		is.read(data);
 		if (!Arrays.equals(data, new byte[] {0,0,0,0})) {

@@ -305,9 +305,9 @@ public class WorldLoader {
 	private void reloadChunk(Chunk chunk, int chunkX, int chunkZ, int renderDistance, Shader shader) {
 		
 		for (int y = 0; y < 16; y++) {
-			ExtendedBlockStorage storage = chunk.getBlockStorageArray()[y];
+			ExtendedBlockStorage[] storage = chunk.getBlockStorageArray();
 			int id = worldChunks[chunkZ*(renderDistance*2-1)*16 + chunkX*16 + y];
-			if (storage == null) {
+			if (storage[y] == null) {
 				if (id == 0) {
 					//do nothing
 					continue;
@@ -324,24 +324,43 @@ public class WorldLoader {
 					worldChunks[chunkZ*(renderDistance*2-1)*16 + chunkX*16 + y] = id;
 				}
 			}
-			loadChunk(id, shader, storage);
+			loadChunk(id, shader, storage, y);
 		}
 	}
 	
 	//TODO handle lighting and metadata
-	private void loadChunk(int id, Shader shader, ExtendedBlockStorage storage) {
-		ObjectIntIdentityMap<IBlockState> map = GameData.getBlockStateIDMap();
+	private void loadChunk(int id, Shader shader, ExtendedBlockStorage[] storage, int height) {
 		int[] data = new int[chunkSize*4];
 		for (int y = 0; y < 16; y++) {
 			for (int z = 0; z < 16; z++) {
 				for (int x = 0; x < 16; x++) {
-					IBlockState state = storage.get(x, y, z);
-					int stateId = map.get(state);
+					IBlockState state = storage[height].get(x, y, z);
 					int oldId = Block.getStateId(state);
 					int[] newId = Maps.getBlock(oldId);
+					if ((oldId & 0xFFF) == 64 || (oldId & 0xFFF) == 71) { //if wooden door
+						if ((oldId >> 12) >= 8) { //if upper
+							int upper = oldId >> 12;
+							int lower;
+							if (y == 0) {
+								lower = Block.getStateId(storage[height-1].get(x, 15, z)) >> 12;
+							} else {
+								lower = Block.getStateId(storage[height].get(x, y-1, z)) >> 12;
+							}
+							newId[1] = Maps.getDoorRotation(lower, upper);
+						} else {
+							int lower = oldId >> 12;
+							int upper;
+							if (y == 15) {
+								upper = Block.getStateId(storage[height+1].get(x, 0, z)) >> 12;
+							} else {
+								upper = Block.getStateId(storage[height].get(x, y+1, z)) >> 12;
+							}
+							newId[1] = Maps.getDoorRotation(lower, upper);
+						}
+					}
 					data[y*16*16*4 + z*16*4 + x*4] = newId[0]; //blockId
 					data[y*16*16*4 + z*16*4 + x*4 + 1] = newId[1]; //rotation
-					data[y*16*16*4 + z*16*4 + x*4 + 2] = storage.getBlocklightArray().get(x, y, z);
+					data[y*16*16*4 + z*16*4 + x*4 + 2] = storage[height].getBlocklightArray().get(x, y, z);
 					data[y*16*16*4 + z*16*4 + x*4 + 3] = 0; //unused
 				}
 			}

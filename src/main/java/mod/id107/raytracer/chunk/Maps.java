@@ -4,6 +4,12 @@ import java.util.HashMap;
 
 import mod.id107.raytracer.Log;
 import mod.id107.raytracer.Matrices;
+import net.minecraft.block.Block;
+import net.minecraft.block.BlockFence;
+import net.minecraft.block.BlockPane;
+import net.minecraft.block.state.IBlockState;
+import net.minecraft.util.math.BlockPos;
+import net.minecraft.world.World;
 
 public class Maps {
 	
@@ -453,7 +459,22 @@ public class Maps {
 		}
 		chunkMap.put(84, new int[] {mapUtil.newBlock("jukebox"), NONE});
 		chunkMap.put(84 + (1<<12), new int[] {mapUtil.getBlock("jukebox"), NONE});
-		//TODO fence
+		chunkMap.put(85, new int[] {mapUtil.newBlock("oak fence 0"), NONE});
+		chunkMap.put(85 + (1<<12), new int[] {mapUtil.newBlock("oak fence 1"), NONE});
+		chunkMap.put(85 + (2<<12), new int[] {mapUtil.getBlock("oak fence 1"), EAST});
+		chunkMap.put(85 + (3<<12), new int[] {mapUtil.newBlock("oak fence 2"), NONE});
+		chunkMap.put(85 + (4<<12), new int[] {mapUtil.getBlock("oak fence 1"), NORTH});
+		chunkMap.put(85 + (5<<12), new int[] {mapUtil.newBlock("oak fence 2_"), NONE});
+		chunkMap.put(85 + (6<<12), new int[] {mapUtil.getBlock("oak fence 2"), EAST});
+		chunkMap.put(85 + (7<<12), new int[] {mapUtil.newBlock("oak fence 3"), WEST});
+		chunkMap.put(85 + (8<<12), new int[] {mapUtil.getBlock("oak fence 1"), WEST});
+		chunkMap.put(85 + (9<<12), new int[] {mapUtil.getBlock("oak fence 2"), WEST});
+		chunkMap.put(85 + (10<<12), new int[] {mapUtil.getBlock("oak fence 2_"), EAST});
+		chunkMap.put(85 + (11<<12), new int[] {mapUtil.getBlock("oak fence 3"), NORTH});
+		chunkMap.put(85 + (12<<12), new int[] {mapUtil.getBlock("oak fence 2"), NORTH});
+		chunkMap.put(85 + (13<<12), new int[] {mapUtil.getBlock("oak fence 3"), EAST});
+		chunkMap.put(85 + (14<<12), new int[] {mapUtil.getBlock("oak fence 3"), NONE});
+		chunkMap.put(85 + (15<<12), new int[] {mapUtil.newBlock("oak fence 4"), NONE});
 		chunkMap.put(86, new int[] {mapUtil.newBlock("pumpkin"), NONE});
 		chunkMap.put(86 + (1<<12), new int[] {mapUtil.getBlock("pumpkin"), WEST});
 		chunkMap.put(86 + (2<<12), new int[] {mapUtil.getBlock("pumpkin"), NORTH});
@@ -561,7 +582,38 @@ public class Maps {
 		for (int i = 0; i < 16; i++) {
 			chunkMap.put(100 + (i<<12), new int[] {mapUtil.newBlock("red mushroom block " + i), NONE});
 		}
-		//TODO iron bars, glass pane
+		chunkMap.put(101, new int[] {mapUtil.newBlock("iron bars 0"), NONE});
+		chunkMap.put(101 + (1<<12), new int[] {mapUtil.newBlock("iron bars 1"), NONE});
+		chunkMap.put(101 + (2<<12), new int[] {mapUtil.getBlock("iron bars 1"), EAST});
+		chunkMap.put(101 + (3<<12), new int[] {mapUtil.newBlock("iron bars 2"), NONE});
+		chunkMap.put(101 + (4<<12), new int[] {mapUtil.getBlock("iron bars 1"), NORTH});
+		chunkMap.put(101 + (5<<12), new int[] {mapUtil.newBlock("iron bars 2_"), NONE});
+		chunkMap.put(101 + (6<<12), new int[] {mapUtil.getBlock("iron bars 2"), EAST});
+		chunkMap.put(101 + (7<<12), new int[] {mapUtil.newBlock("iron bars 3"), WEST});
+		chunkMap.put(101 + (8<<12), new int[] {mapUtil.getBlock("iron bars 1"), WEST});
+		chunkMap.put(101 + (9<<12), new int[] {mapUtil.getBlock("iron bars 2"), WEST});
+		chunkMap.put(101 + (10<<12), new int[] {mapUtil.getBlock("iron bars 2_"), EAST});
+		chunkMap.put(101 + (11<<12), new int[] {mapUtil.getBlock("iron bars 3"), NORTH});
+		chunkMap.put(101 + (12<<12), new int[] {mapUtil.getBlock("iron bars 2"), NORTH});
+		chunkMap.put(101 + (13<<12), new int[] {mapUtil.getBlock("iron bars 3"), EAST});
+		chunkMap.put(101 + (14<<12), new int[] {mapUtil.getBlock("iron bars 3"), NONE});
+		chunkMap.put(101 + (15<<12), new int[] {mapUtil.newBlock("iron bars 4"), NONE});
+		chunkMap.put(102, new int[] {mapUtil.newBlock("glass pane 0"), NONE});
+		chunkMap.put(102 + (1<<12), new int[] {mapUtil.newBlock("glass pane 1"), NONE});
+		chunkMap.put(102 + (2<<12), new int[] {mapUtil.getBlock("glass pane 1"), EAST});
+		chunkMap.put(102 + (3<<12), new int[] {mapUtil.newBlock("glass pane 2"), NONE});
+		chunkMap.put(102 + (4<<12), new int[] {mapUtil.getBlock("glass pane 1"), NORTH});
+		chunkMap.put(102 + (5<<12), new int[] {mapUtil.newBlock("glass pane 2_"), NONE});
+		chunkMap.put(102 + (6<<12), new int[] {mapUtil.getBlock("glass pane 2"), EAST});
+		chunkMap.put(102 + (7<<12), new int[] {mapUtil.newBlock("glass pane 3"), WEST});
+		chunkMap.put(102 + (8<<12), new int[] {mapUtil.getBlock("glass pane 1"), WEST});
+		chunkMap.put(102 + (9<<12), new int[] {mapUtil.getBlock("glass pane 2"), WEST});
+		chunkMap.put(102 + (10<<12), new int[] {mapUtil.getBlock("glass pane 2_"), EAST});
+		chunkMap.put(102 + (11<<12), new int[] {mapUtil.getBlock("glass pane 3"), NORTH});
+		chunkMap.put(102 + (12<<12), new int[] {mapUtil.getBlock("glass pane 2"), NORTH});
+		chunkMap.put(102 + (13<<12), new int[] {mapUtil.getBlock("glass pane 3"), EAST});
+		chunkMap.put(102 + (14<<12), new int[] {mapUtil.getBlock("glass pane 3"), NONE});
+		chunkMap.put(102 + (15<<12), new int[] {mapUtil.newBlock("glass pane 4"), NONE});
 		chunkMap.put(103, new int[] {mapUtil.newBlock("melon"), NONE});
 		//TODO pumpkin stem, melon stem, vines, fence gate, brick stairs, stone brick stairs
 		chunkMap.put(110, new int[] {mapUtil.newBlock("mycelium"), NONE});
@@ -815,6 +867,12 @@ public class Maps {
 		idMap[mapUtil.getBlock("clay")] = mapUtil.nextTexture("clay", 0);
 		idMap[mapUtil.getBlock("sugar cane")] = mapUtil.nextVoxel("reeds", 0);
 		idMap[mapUtil.getBlock("jukebox")] = mapUtil.nextTexture(new String[] {"jukebox_side", "jukebox_side", "jukebox_top", "jukebox_side", "jukebox_side", "jukebox_side"}, 0);
+		idMap[mapUtil.getBlock("oak fence 0")] = mapUtil.nextVoxel("fence_oak_0", 0);
+		idMap[mapUtil.getBlock("oak fence 1")] = mapUtil.nextVoxel("fence_oak_1", 0);
+		idMap[mapUtil.getBlock("oak fence 2")] = mapUtil.nextVoxel("fence_oak_2", 0);
+		idMap[mapUtil.getBlock("oak fence 2_")] = mapUtil.nextVoxel("fence_oak_2_", 0);
+		idMap[mapUtil.getBlock("oak fence 3")] = mapUtil.nextVoxel("fence_oak_3", 0);
+		idMap[mapUtil.getBlock("oak fence 4")] = mapUtil.nextVoxel("fence_oak_4", 0);
 		idMap[mapUtil.getBlock("pumpkin")] = mapUtil.nextTexture(new String[] {"pumpkin_side", "pumpkin_side", "pumpkin_top", "pumpkin_top", "pumpkin_face_off", "pumpkin_side"}, 0);
 		idMap[mapUtil.getBlock("pumpkin no face")] = mapUtil.nextTexture(new String[] {"pumpkin_side", "pumpkin_side", "pumpkin_top", "pumpkin_top", "pumpkin_side", "pumpkin_side"}, 0);
 		idMap[mapUtil.getBlock("netherrack")] = mapUtil.nextTexture("netherrack", 0);
@@ -888,6 +946,18 @@ public class Maps {
 		idMap[mapUtil.getBlock("red mushroom block 13")] = mapUtil.nextTexture(new String[] {"mushroom_block_inside", "mushroom_block_inside", "mushroom_block_inside", "mushroom_block_inside", "mushroom_block_inside", "mushroom_block_inside"}, 0);
 		idMap[mapUtil.getBlock("red mushroom block 14")] = mapUtil.nextTexture(new String[] {"mushroom_block_skin_red", "mushroom_block_skin_red", "mushroom_block_skin_red", "mushroom_block_skin_red", "mushroom_block_skin_red", "mushroom_block_skin_red"}, 0);
 		idMap[mapUtil.getBlock("red mushroom block 15")] = mapUtil.nextTexture(new String[] {"mushroom_block_skin_stem", "mushroom_block_skin_stem", "mushroom_block_skin_stem", "mushroom_block_skin_stem", "mushroom_block_skin_stem", "mushroom_block_skin_stem"}, 0);
+		idMap[mapUtil.getBlock("iron bars 0")] = mapUtil.nextVoxel("iron_bars_0", 0);
+		idMap[mapUtil.getBlock("iron bars 1")] = mapUtil.nextVoxel("iron_bars_1", 0);
+		idMap[mapUtil.getBlock("iron bars 2")] = mapUtil.nextVoxel("iron_bars_2", 0);
+		idMap[mapUtil.getBlock("iron bars 2_")] = mapUtil.nextVoxel("iron_bars_2_", 0);
+		idMap[mapUtil.getBlock("iron bars 3")] = mapUtil.nextVoxel("iron_bars_3", 0);
+		idMap[mapUtil.getBlock("iron bars 4")] = mapUtil.nextVoxel("iron_bars_4", 0);
+		idMap[mapUtil.getBlock("glass pane 0")] = mapUtil.nextVoxel("glass_pane_0", 0);
+		idMap[mapUtil.getBlock("glass pane 1")] = mapUtil.nextVoxel("glass_pane_1", 0);
+		idMap[mapUtil.getBlock("glass pane 2")] = mapUtil.nextVoxel("glass_pane_2", 0);
+		idMap[mapUtil.getBlock("glass pane 2_")] = mapUtil.nextVoxel("glass_pane_2_", 0);
+		idMap[mapUtil.getBlock("glass pane 3")] = mapUtil.nextVoxel("glass_pane_3", 0);
+		idMap[mapUtil.getBlock("glass pane 4")] = mapUtil.nextVoxel("glass_pane_4", 0);
 		idMap[mapUtil.getBlock("melon")] = mapUtil.nextTexture(new String[] {"melon_side", "melon_side", "melon_top", "melon_top", "melon_side", "melon_side"}, 0);
 		idMap[mapUtil.getBlock("mycelium")] = mapUtil.nextTexture(new String[] {"mycelium_side", "mycelium_side", "mycelium_top", "dirt", "mycelium_side", "mycelium_side"}, 0);
 		idMap[mapUtil.getBlock("lily pad")] = mapUtil.nextVoxel("waterlily", 0);
@@ -970,6 +1040,40 @@ public class Maps {
 			break;
 		}
 		return rotation;
+	}
+	
+	public static int[] getFence(int id, World world, BlockPos pos) {
+		BlockFence fence = (BlockFence)Block.getBlockById(id);
+		IBlockState state = fence.getActualState(fence.getDefaultState(), world, pos);
+		
+		int metadata = 0;
+		if (state.getValue(fence.SOUTH))
+			metadata += 1;
+		if (state.getValue(fence.EAST))
+			metadata += 2;
+		if (state.getValue(fence.NORTH))
+			metadata += 4;
+		if (state.getValue(fence.WEST))
+			metadata += 8;
+		
+		return getBlock(id + (metadata<<12));
+	}
+	
+	public static int[] getPane(int id, World world, BlockPos pos) {
+		BlockPane pane = (BlockPane)Block.getBlockById(id);
+		IBlockState state = pane.getActualState(pane.getDefaultState(), world, pos);
+		
+		int metadata = 0;
+		if (state.getValue(pane.SOUTH))
+			metadata += 1;
+		if (state.getValue(pane.EAST))
+			metadata += 2;
+		if (state.getValue(pane.NORTH))
+			metadata += 4;
+		if (state.getValue(pane.WEST))
+			metadata += 8;
+		
+		return getBlock(id + (metadata<<12));
 	}
 	
 	public static int[][][] getIdMap() {

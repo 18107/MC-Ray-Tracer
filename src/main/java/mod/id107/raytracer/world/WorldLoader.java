@@ -14,9 +14,13 @@ import mod.id107.raytracer.Log;
 import mod.id107.raytracer.Shader;
 import mod.id107.raytracer.chunk.Maps;
 import net.minecraft.block.Block;
+import net.minecraft.block.BlockFence;
+import net.minecraft.block.BlockPane;
 import net.minecraft.block.state.IBlockState;
 import net.minecraft.client.Minecraft;
 import net.minecraft.util.ObjectIntIdentityMap;
+import net.minecraft.util.math.BlockPos;
+import net.minecraft.world.World;
 import net.minecraft.world.chunk.Chunk;
 import net.minecraft.world.chunk.storage.ExtendedBlockStorage;
 import net.minecraftforge.fml.common.registry.GameData;
@@ -324,12 +328,12 @@ public class WorldLoader {
 					worldChunks[chunkZ*(renderDistance*2-1)*16 + chunkX*16 + y] = id;
 				}
 			}
-			loadChunk(id, shader, storage, y);
+			loadChunk(id, shader, chunk, storage, y);
 		}
 	}
 	
 	//TODO handle lighting and metadata
-	private void loadChunk(int id, Shader shader, ExtendedBlockStorage[] storage, int height) {
+	private void loadChunk(int id, Shader shader, Chunk chunk, ExtendedBlockStorage[] storage, int height) {
 		int[] data = new int[chunkSize*4];
 		for (int y = 0; y < 16; y++) {
 			for (int z = 0; z < 16; z++) {
@@ -337,7 +341,9 @@ public class WorldLoader {
 					IBlockState state = storage[height].get(x, y, z);
 					int oldId = Block.getStateId(state);
 					int[] newId = Maps.getBlock(oldId);
-					if ((oldId & 0xFFF) == 64 || (oldId & 0xFFF) == 71) { //if wooden door
+					switch (oldId & 0xFFF) {
+					case 64: //wooden door
+					case 71: //iron door
 						if ((oldId >> 12) >= 8) { //if upper
 							int upper = oldId >> 12;
 							int lower;
@@ -357,6 +363,14 @@ public class WorldLoader {
 							}
 							newId[1] = Maps.getDoorRotation(lower, upper);
 						}
+						break;
+					case 85: //oak fence
+						newId = Maps.getFence(oldId & 0xFFF, chunk.getWorld(), new BlockPos(chunk.xPosition*16 + x, height*16 + y, chunk.zPosition*16 + z));
+						break;
+					case 101: //iron bars
+					case 102: //glass pane
+						newId = Maps.getPane(oldId & 0xFFF, chunk.getWorld(), new BlockPos(chunk.xPosition*16 + x, height*16 + y, chunk.zPosition*16 + z));
+						break;
 					}
 					data[y*16*16*4 + z*16*4 + x*4] = newId[0]; //blockId
 					data[y*16*16*4 + z*16*4 + x*4 + 1] = newId[1]; //rotation

@@ -365,11 +365,25 @@ public class WorldLoader {
 						}
 						break;
 					case 85: //oak fence
-						newId = Maps.getFence(oldId & 0xFFF, chunk.getWorld(), new BlockPos(chunk.xPosition*16 + x, height*16 + y, chunk.zPosition*16 + z));
+						newId = Maps.getFence(oldId, chunk.getWorld(), new BlockPos(chunk.xPosition*16 + x, height*16 + y, chunk.zPosition*16 + z));
 						break;
 					case 101: //iron bars
 					case 102: //glass pane
-						newId = Maps.getPane(oldId & 0xFFF, chunk.getWorld(), new BlockPos(chunk.xPosition*16 + x, height*16 + y, chunk.zPosition*16 + z));
+						newId = Maps.getPane(oldId, chunk.getWorld(), new BlockPos(chunk.xPosition*16 + x, height*16 + y, chunk.zPosition*16 + z));
+						break;
+					case 139: //cobblestone wall
+						newId = Maps.getWall(oldId, chunk.getWorld(), new BlockPos(chunk.xPosition*16 + x, height*16 + y, chunk.zPosition*16 + z));
+						break;
+					case 175: //large flowers
+						if (oldId >> 12 >= 8) {
+							int lower;
+							if (y == 0) {
+								lower = Block.getStateId(storage[height-1].get(x, 15, z)) >> 12;
+							} else {
+								lower = Block.getStateId(storage[height].get(x, y-1, z)) >> 12;
+							}
+							newId = Maps.getBlock((oldId&0xFFF) + (8<<12) + (lower<<16));
+						}
 						break;
 					}
 					data[y*16*16*4 + z*16*4 + x*4] = newId[0]; //blockId

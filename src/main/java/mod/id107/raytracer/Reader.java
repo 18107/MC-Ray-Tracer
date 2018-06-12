@@ -44,7 +44,15 @@ public class Reader {
 	}
 	
 	public static int[] readQubicle(String fileName) throws IOException {
-		InputStream is = Reader.class.getResourceAsStream(fileName);
+		IResourceManager resourceManager = Minecraft.getMinecraft().getResourceManager();
+		IResource resource = null;
+		try {
+			resource = resourceManager.getResource(new ResourceLocation(fileName));
+		} catch (IOException e) {
+			e.printStackTrace();
+			return null;
+		}
+		InputStream is = resource.getInputStream();
 		if (is == null) {
 			throw new IOException("File not found: " + fileName);
 		}

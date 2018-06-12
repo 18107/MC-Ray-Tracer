@@ -126,7 +126,7 @@ public class Shader {
 		int[] data;
 		try {
 			for (String voxel : voxels) {
-				data = Reader.readQubicle("/mod/id107/raytracer/voxel/" + voxel + ".qb"); //TODO
+				data = Reader.readQubicle("raytracer:voxel/" + voxel + ".qb"); //TODO
 				for (int i = 0; i < data.length; i++) {
 					voxelBuffer.put(data[i]/255f);
 				}

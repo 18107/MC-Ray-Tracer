@@ -134,7 +134,7 @@ public class MapUtil {
 		for (int i = 0; i < id.length; i++) {
 			id[i] = nextTexture(name[i]);
 		}
-		return new int[][] {{0,id[0],rotation[0]}, {0,id[1],rotation[1]}, {0,id[1],rotation[2]}, {0,id[1],rotation[3]}, {0,id[1],rotation[4]}, {0,id[1],rotation[5]}};
+		return new int[][] {{0,id[0],rotation[0]}, {0,id[1],rotation[1]}, {0,id[2],rotation[2]}, {0,id[3],rotation[3]}, {0,id[4],rotation[4]}, {0,id[5],rotation[5]}};
 	}
 	
 	public String[] getAllBlocks() {

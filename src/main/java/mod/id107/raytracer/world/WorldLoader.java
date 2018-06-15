@@ -118,7 +118,9 @@ public class WorldLoader {
 			}
 			return false;
 		}
-	}/**
+	}
+	
+	/**
 	 * Gets a chunk from the chunk coordinates, then adds it
 	 * to the beginning of the queue if it exists.
 	 * @param x chunk coordinate
@@ -365,6 +367,7 @@ public class WorldLoader {
 						}
 						break;
 					case 85: //oak fence
+					case 113: //nether brick fence
 						newId = Maps.getFence(oldId, chunk.getWorld(), new BlockPos(chunk.xPosition*16 + x, height*16 + y, chunk.zPosition*16 + z));
 						break;
 					case 101: //iron bars

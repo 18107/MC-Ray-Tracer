@@ -27,8 +27,8 @@ public class Shader {
 	
 	public void createShaderProgram() {
 		shaderProgram = GL20.glCreateProgram();
-		vShader = createShader(Reader.readShader("/mod/id107/raytracer/shaders/quad.vs"), GL20.GL_VERTEX_SHADER);
-		fShader = createShader(Reader.readShader("/mod/id107/raytracer/shaders/frag.fs"), GL20.GL_FRAGMENT_SHADER);
+		vShader = createShader(Reader.readShader("raytracer:shaders/quad.vs"), GL20.GL_VERTEX_SHADER);
+		fShader = createShader(Reader.readShader("raytracer:shaders/frag.fs"), GL20.GL_FRAGMENT_SHADER);
 		
 		GL20.glAttachShader(shaderProgram, vShader);
 		GL20.glAttachShader(shaderProgram, fShader);

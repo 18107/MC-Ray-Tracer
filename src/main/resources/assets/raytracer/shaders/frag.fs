@@ -197,7 +197,7 @@ bool traceBlock(int id, vec3 nearestVoxel, ivec4 currentVoxel, mat4 rotate, vec3
     color = voxelColor[id*TEXTURE_RESOLUTION*TEXTURE_RESOLUTION*TEXTURE_RESOLUTION +
         rotated.z*TEXTURE_RESOLUTION*TEXTURE_RESOLUTION +
         rotated.y*TEXTURE_RESOLUTION + rotated.x];
-    if (color.a != 0) {
+    if (color.a >= 0.5) {
       return true;
     }
   }
@@ -258,7 +258,7 @@ bool setupTraceBlock(int id, vec3 nearestCube, vec3 inc, ivec3 iinc, ivec3 curre
   color = voxelColor[id*TEXTURE_RESOLUTION*TEXTURE_RESOLUTION*TEXTURE_RESOLUTION +
       rotated.z*TEXTURE_RESOLUTION*TEXTURE_RESOLUTION +
       rotated.y*TEXTURE_RESOLUTION + rotated.x];
-  if (color.a != 0) {
+  if (color.a >= 0.5) {
     return true;
   }
 
@@ -303,7 +303,7 @@ bool drawTexture(int blockId, int side, vec4 texVector, int blockRotation, int l
     int(floor(texY*TEXTURE_RESOLUTION))*TEXTURE_RESOLUTION +
     int(floor(texX*TEXTURE_RESOLUTION))] *
     vec4((light+1)/16.0, (light+1)/16.0, (light+1)/16.0, 1);
-  if (color.a == 0) {
+  if (color.a < 0.5) {
     return false;
   }
   return true;

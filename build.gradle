@@ -23,7 +23,7 @@ compileJava {
 jar {
         manifest {
         attributes 'FMLAT': 'raytracer_at.cfg',
-            'FMLCorePlugin': 'mod.id107.raytracer.coretransform.CoreLoader',
+            'FMLCorePlugin': 'core.id107.raytracer.coretransform.CoreLoader',
                         'FMLCorePluginContainsFMLMod': 'false'
     }
 }

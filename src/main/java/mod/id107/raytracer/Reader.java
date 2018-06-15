@@ -18,8 +18,16 @@ public class Reader {
 	
 	private static final byte[] header = {0,0,0,2, 0,0,0,16, 0,0,0,16, 0,0,0,16};
 
-	public static String readShader(String resourceIn) {
-		InputStream is = Reader.class.getResourceAsStream(resourceIn);
+	public static String readShader(String fileName) {
+		IResourceManager resourceManager = Minecraft.getMinecraft().getResourceManager();
+		IResource resource = null;
+		try {
+			resource = resourceManager.getResource(new ResourceLocation(fileName));
+		} catch (IOException e) {
+			e.printStackTrace();
+			return null;
+		}
+		InputStream is = resource.getInputStream();
 		if (is == null) {
 			Log.info("Shader not found");
 			return "";

@@ -206,6 +206,30 @@ bool traceBlock(int id, vec3 nearestVoxel, ivec4 currentVoxel, mat4 rotate, vec3
 bool setupTraceFirstBlock() { //TODO
   return false;
   //ivec4 currentVoxel = ivec4(floor(mod(pos,1)),1);
+
+  /*int side = 0;
+  vec4 sideVector = vec4(0,0,-1,0)*rotation[blockRotation];
+  if (sideVector.x == 1)
+    side = 0;
+  else if (sideVector.x == -1)
+    side = 1;
+  else if (sideVector.y == 1)
+    side = 2;
+  else if (sideVector.y == -1)
+    side = 3;
+  else if (sideVector.z == 1)
+    side = 4;
+  else
+    side = 5;
+
+  bool isVoxel = bool(idData[blockId*6*3 + side*3]);
+  if (!isVoxel) {
+    return false;
+  }
+  int voxId = idData[blockId*6*3 + side*3 + 1];
+  int rotate = idData[blockId*6*3 + side*3 + 2];*/
+
+  //TODO setupTraceBlock
 }
 
 bool setupTraceBlock(int id, vec3 nearestCube, vec3 inc, ivec3 iinc, ivec3 current, ivec3 last, mat4 rotate) {

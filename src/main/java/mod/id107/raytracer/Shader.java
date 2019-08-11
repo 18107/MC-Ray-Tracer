@@ -146,7 +146,7 @@ public class Shader {
 		int[] data;
 		for (String texture : textures) {
 			data = Reader.readTexture("textures/blocks/" + texture + ".png"); //TODO
-			for (int i = 0; i < data.length; i++) {
+			for (int i = 0; i < 16*16*4; i++) { //TODO make texture size variable
 				textureBuffer.put(data[i]/255f);
 			}
 		}

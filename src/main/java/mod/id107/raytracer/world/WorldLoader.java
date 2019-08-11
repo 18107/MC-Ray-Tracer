@@ -346,6 +346,11 @@ public class WorldLoader {
 					switch (oldId & 0xFFF) {
 					case 64: //wooden door
 					case 71: //iron door
+					case 193: //spruce door
+					case 194: //birch door
+					case 195: //jungle door
+					case 196: //acacia door
+					case 197: //dark oak door
 						if ((oldId >> 12) >= 8) { //if upper
 							int upper = oldId >> 12;
 							int lower;
